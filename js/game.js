@@ -14,6 +14,7 @@ class GameEngine {
         this.enemies = [];
         this.particles = new ParticleFX();
         this.mapManager = new SeaMapManager();
+        this.camera = { x: 0, y: 0 };
 
         this.survivalTime = 0;
         this.devourCount = 0;
@@ -35,14 +36,12 @@ class GameEngine {
     }
 
     initCanvasSize() {
-        const container = document.getElementById('game-container');
-        this.canvas.width = container.clientWidth;
-        this.canvas.height = container.clientHeight;
-
-        window.addEventListener('resize', () => {
-            this.canvas.width = container.clientWidth;
-            this.canvas.height = container.clientHeight;
-        });
+        const updateSize = () => {
+            this.canvas.width = window.innerWidth;
+            this.canvas.height = window.innerHeight;
+        };
+        updateSize();
+        window.addEventListener('resize', updateSize);
     }
 
     initJoystick() {
@@ -108,6 +107,7 @@ class GameEngine {
 
     startNewGame() {
         this.player = new PlayerFish(0, 0);
+        this.camera = { x: 0, y: 0 };
         this.enemies = [];
         this.survivalTime = 0;
         this.devourCount = 0;
@@ -241,6 +241,12 @@ class GameEngine {
         this.player.update(dt, inputVec, this.upgradeMultipliers);
         this.mapManager.update(dt);
         this.particles.update(dt);
+
+        // 相机平滑跟随玩家：保持主角在屏幕视野的中心位置
+        if (this.player) {
+            this.camera.x += (this.player.x - this.camera.x) * 0.15;
+            this.camera.y += (this.player.y - this.camera.y) * 0.15;
+        }
 
         // 离远清理与怪物动态补充
         for (let i = this.enemies.length - 1; i >= 0; i--) {
@@ -383,14 +389,16 @@ class GameEngine {
     renderCanvas() {
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
-        const camera = this.player ? { x: this.player.x, y: this.player.y } : { x: 0, y: 0 };
+        const camera = this.player ? this.camera : { x: 0, y: 0 };
+        const centerX = Math.floor(this.canvas.width / 2);
+        const centerY = Math.floor(this.canvas.height / 2);
 
         // 绘制海域背景
         this.mapManager.drawBackground(this.ctx, camera);
 
         if (this.player) {
             this.ctx.save();
-            this.ctx.translate(this.canvas.width / 2 - camera.x, this.canvas.height / 2 - camera.y);
+            this.ctx.translate(centerX - camera.x, centerY - camera.y);
 
             // 绘制敌对怪物
             this.enemies.forEach(e => e.draw(this.ctx, this.player.stageIdx));

@@ -32,19 +32,15 @@ body, html {
     color: #ffffff;
 }
 
-/* 核心游戏外框容器 (保持 16:9 横屏比例) */
+/* 核心游戏全屏容器 */
 #game-container {
-    position: relative;
+    position: fixed;
+    top: 0;
+    left: 0;
     width: 100vw;
     height: 100vh;
-    max-width: 1334px;
-    max-height: 750px;
-    margin: auto;
-    top: 50%;
-    transform: translateY(-50%);
     overflow: hidden;
     background-color: #030712;
-    box-shadow: 0 0 60px rgba(0, 242, 254, 0.25), 0 0 100px rgba(0, 0, 0, 0.9);
 }
 
 /* Canvas 游戏层 */
