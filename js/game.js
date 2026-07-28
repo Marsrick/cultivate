@@ -102,7 +102,8 @@ class GameEngine {
         // 皮肤标签更新
         const skinInfo = SKINS_DATABASE.find(s => s.id === data.currentSkin);
         const skinTag = document.getElementById('hero-current-form');
-        if (skinTag) skinTag.innerText = `当前形态：锦鲤 (${skinInfo ? skinInfo.name : '默认'})`;
+        const pStageName = (this.player && this.player.getStageInfo()) ? this.player.getStageInfo().name : currentStageInfo.name;
+        if (skinTag) skinTag.innerText = `当前形态：${pStageName} (${skinInfo ? skinInfo.name : '默认'})`;
     }
 
     startNewGame() {
@@ -132,7 +133,7 @@ class GameEngine {
 
     spawnEnemy() {
         const angle = Math.random() * Math.PI * 2;
-        const dist = Math.random() * 1000 + 450;
+        const dist = Math.random() * 800 + 450;
         const ex = this.player.x + Math.cos(angle) * dist;
         const ey = this.player.y + Math.sin(angle) * dist;
 
@@ -241,7 +242,13 @@ class GameEngine {
         this.mapManager.update(dt);
         this.particles.update(dt);
 
-        // 补充敌对怪物
+        // 离远清理与怪物动态补充
+        for (let i = this.enemies.length - 1; i >= 0; i--) {
+            const e = this.enemies[i];
+            if (Math.hypot(e.x - this.player.x, e.y - this.player.y) > 2000) {
+                this.enemies.splice(i, 1);
+            }
+        }
         while (this.enemies.length < 35) {
             this.spawnEnemy();
         }
@@ -276,8 +283,9 @@ class GameEngine {
 
                     if (window.soundEngine) window.soundEngine.playDevour();
 
-                    // 解锁图鉴
-                    window.storageManager.unlockBio(eStageInfo.id || "tadpole");
+                    // 精准解封图鉴
+                    const bio = BIOPEDIA_DATABASE[e.stageIdx];
+                    window.storageManager.unlockBio(bio ? bio.id : "tadpole");
 
                     // 检查形态进化
                     if (this.player.exp >= pStageInfo.reqExp && this.player.stageIdx < EVOLUTION_STAGES.length - 1) {
@@ -335,6 +343,7 @@ class GameEngine {
     revivePlayer() {
         this.hasRevived = true;
         this.player.hasShield = true;
+        this.player.shieldTimer = 3.0;
         this.switchState("PLAYING");
         document.getElementById('modal-revive').classList.remove('active');
         this.showToast("✨ 复活成功！获得 3 秒护盾保护");

@@ -24,11 +24,16 @@ class JoystickController {
     initEvents() {
         if (!this.zone) return;
 
+        this.touchId = null;
+
         const onStart = (e) => {
             if (this.active) return;
             if (e.cancelable) e.preventDefault();
-            const touch = e.touches ? e.touches[0] : e;
+            const touch = e.targetTouches ? e.targetTouches[0] : e;
+            if (!touch) return;
+
             this.active = true;
+            this.touchId = touch.identifier !== undefined ? touch.identifier : null;
 
             const rect = this.zone.getBoundingClientRect();
             this.centerPos = {
@@ -41,13 +46,26 @@ class JoystickController {
 
         const onMove = (e) => {
             if (!this.active) return;
-            if (e.cancelable) e.preventDefault();
-            const touch = e.touches ? e.touches[0] : e;
+            let touch = e;
+            if (e.touches && this.touchId !== null) {
+                for (let i = 0; i < e.touches.length; i++) {
+                    if (e.touches[i].identifier === this.touchId) {
+                        touch = e.touches[i];
+                        break;
+                    }
+                }
+            }
             this.updatePosition(touch.clientX, touch.clientY);
         };
 
-        const onEnd = () => {
+        const onEnd = (e) => {
+            if (e.touches && this.touchId !== null) {
+                for (let i = 0; i < e.touches.length; i++) {
+                    if (e.touches[i].identifier === this.touchId) return; // 摇杆触点尚未抬起
+                }
+            }
             this.active = false;
+            this.touchId = null;
             this.vector = { x: 0, y: 0 };
             this.thumb.style.transform = `translate(-50%, -50%)`;
         };

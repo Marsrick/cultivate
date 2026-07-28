@@ -17,7 +17,7 @@ class PlayerFish {
         this.vy = 0;
         this.angle = 0;
 
-        this.stageIdx = 3; // 锦鲤 (Stage 4, 0-indexed: 3)
+        this.stageIdx = 0; // 蝌蚪 (Stage 1, 0-indexed: 0)
         this.exp = 0;
         this.combo = 0;
         this.comboTimer = 0;
@@ -26,6 +26,7 @@ class PlayerFish {
         this.dashTimer = 0;
         this.dashCD = 0;
         this.hasShield = false;
+        this.shieldTimer = 0;
         this.isHurt = false;
         this.hurtTimer = 0;
         this.isDead = false;
@@ -34,7 +35,7 @@ class PlayerFish {
     }
 
     getStageInfo() {
-        return EVOLUTION_STAGES[this.stageIdx];
+        return EVOLUTION_STAGES[this.stageIdx] || EVOLUTION_STAGES[0];
     }
 
     update(dt, inputVector, upgradeMultipliers) {
@@ -49,6 +50,13 @@ class PlayerFish {
             this.dashTimer -= dt;
             if (this.dashTimer <= 0) {
                 this.isDashing = false;
+            }
+        }
+
+        if (this.shieldTimer > 0) {
+            this.shieldTimer -= dt;
+            if (this.shieldTimer <= 0) {
+                this.hasShield = false;
             }
         }
 
@@ -117,18 +125,15 @@ class PlayerFish {
         const color = skinColor || info.color;
 
         ctx.save();
+        const cosA = Math.cos(this.angle);
+        const sinA = Math.sin(this.angle);
         ctx.translate(this.x, this.y);
 
-        // 自然游动姿态修正：确保鱼背永远朝上，绝不出现倒立或仰泳
-        const isFacingRight = Math.cos(this.angle) >= 0;
-        if (isFacingRight) {
-            ctx.scale(-1, 1);
-            ctx.rotate(-this.angle);
+        // 360度数学正交矩阵变换：头部精确对齐游动方向，背鳍 100% 垂直朝上，绝不出现仰泳
+        if (cosA < 0) {
+            ctx.transform(-cosA, -sinA, sinA, -cosA, 0, 0);
         } else {
-            let rot = this.angle - Math.PI;
-            while (rot < -Math.PI) rot += Math.PI * 2;
-            while (rot > Math.PI) rot -= Math.PI * 2;
-            ctx.rotate(rot);
+            ctx.transform(-cosA, -sinA, -sinA, cosA, 0, 0);
         }
 
         // 底层软光晕
@@ -249,18 +254,15 @@ class EnemyFish {
         let r = info.radius * (this.isElite ? 1.35 : 1.0);
 
         ctx.save();
+        const cosA = Math.cos(this.angle);
+        const sinA = Math.sin(this.angle);
         ctx.translate(this.x, this.y);
 
-        // 自然游动姿态修正：确保鱼背永远朝上，绝不出现倒立或仰泳
-        const isFacingRight = Math.cos(this.angle) >= 0;
-        if (isFacingRight) {
-            ctx.scale(-1, 1);
-            ctx.rotate(-this.angle);
+        // 360度数学正交矩阵变换：头部精确对齐游动方向，背鳍 100% 垂直朝上，绝不出现仰泳
+        if (cosA < 0) {
+            ctx.transform(-cosA, -sinA, sinA, -cosA, 0, 0);
         } else {
-            let rot = this.angle - Math.PI;
-            while (rot < -Math.PI) rot += Math.PI * 2;
-            while (rot > Math.PI) rot -= Math.PI * 2;
-            ctx.rotate(rot);
+            ctx.transform(-cosA, -sinA, -sinA, cosA, 0, 0);
         }
 
         const fIdx = this.getFrameIndex();
