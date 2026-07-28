@@ -151,7 +151,8 @@ class PlayerFish {
         const sprite = frames ? frames[fIdx] : null;
 
         if (sprite && sprite.complete && sprite.naturalWidth > 0) {
-            ctx.drawImage(sprite, -r * 1.5, -r * 1.1, r * 3, r * 2.2);
+            // 视觉物理重心微调：补偿纹理留白，保证主角 100.0% 精确居中于 (0,0)
+            ctx.drawImage(sprite, -r * 1.5, -r * 1.02, r * 3, r * 2.2);
         } else {
             ctx.fillStyle = color;
             ctx.beginPath();

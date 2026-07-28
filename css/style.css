@@ -397,7 +397,9 @@ body, html {
     display: flex;
     flex-direction: column;
     align-items: center;
-    margin-top: 10px;
+    justify-content: center;
+    margin-top: 0;
+    transform: translateY(-8px);
 }
 
 .game-title-wrapper {
