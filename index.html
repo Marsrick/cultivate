@@ -412,12 +412,15 @@
     <script src="js/entities.js"></script>
     <script src="js/map.js"></script>
     <script src="js/game.js"></script>
-    <!-- PWA Service Worker 注册 -->
+    <!-- PWA Service Worker 注册 (带强制版本刷新) -->
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js')
-                    .then((reg) => console.log('[PWA] Service Worker 注册成功: ', reg.scope))
+                navigator.serviceWorker.register('./sw.js?v=3')
+                    .then((reg) => {
+                        console.log('[PWA] Service Worker 注册成功: ', reg.scope);
+                        reg.update();
+                    })
                     .catch((err) => console.log('[PWA] Service Worker 注册失败: ', err));
             });
         }

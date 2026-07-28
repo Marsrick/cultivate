@@ -1,4 +1,4 @@
-const CACHE_NAME = 'xiuxian-v1';
+const CACHE_NAME = 'xiuxian-v3';
 const STATIC_ASSETS = [
     './',
     './index.html',
@@ -19,24 +19,25 @@ const STATIC_ASSETS = [
     './favicon.ico'
 ];
 
-// 安装 Service Worker 并预缓存核心静态资源
+// 安装 Service Worker
 self.addEventListener('install', (event) => {
+    self.skipWaiting();
     event.waitUntil(
         caches.open(CACHE_NAME).then((cache) => {
-            console.log('[SW] Pre-caching offline static assets');
+            console.log('[SW] Pre-caching v3 assets');
             return cache.addAll(STATIC_ASSETS);
-        }).then(() => self.skipWaiting())
+        })
     );
 });
 
-// 激活 Service Worker 并清理旧版本缓存
+// 激活 Service Worker 并即时清空所有旧版本缓存
 self.addEventListener('activate', (event) => {
     event.waitUntil(
         caches.keys().then((cacheNames) => {
             return Promise.all(
                 cacheNames.map((cache) => {
                     if (cache !== CACHE_NAME) {
-                        console.log('[SW] Clearing old cache:', cache);
+                        console.log('[SW] Deleting old cache:', cache);
                         return caches.delete(cache);
                     }
                 })
@@ -45,33 +46,19 @@ self.addEventListener('activate', (event) => {
     );
 });
 
-// 拦截请求：优先从 Cache 获取，网路 fallback，并动态缓存图像音效资源
+// 网络优先策略 (Network-First) 确保最新修改即时拉取生效
 self.addEventListener('fetch', (event) => {
-    // 仅拦截 http/https GET 请求
     if (event.request.method !== 'GET' || !event.request.url.startsWith('http')) return;
 
     event.respondWith(
-        caches.match(event.request).then((cachedResponse) => {
-            if (cachedResponse) {
-                // 后台静默发起 Fetch 更新缓存 (Stale-While-Revalidate)
-                fetch(event.request).then((networkResponse) => {
-                    if (networkResponse && networkResponse.status === 200) {
-                        caches.open(CACHE_NAME).then((cache) => cache.put(event.request, networkResponse));
-                    }
-                }).catch(() => {/* 离线静默忽略 */});
-                return cachedResponse;
-            }
-
-            return fetch(event.request).then((networkResponse) => {
-                if (!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic') {
-                    return networkResponse;
-                }
+        fetch(event.request).then((networkResponse) => {
+            if (networkResponse && networkResponse.status === 200) {
                 const responseToCache = networkResponse.clone();
-                caches.open(CACHE_NAME).then((cache) => {
-                    cache.put(event.request, responseToCache);
-                });
-                return networkResponse;
-            });
+                caches.open(CACHE_NAME).then((cache) => cache.put(event.request, responseToCache));
+            }
+            return networkResponse;
+        }).catch(() => {
+            return caches.match(event.request);
         })
     );
 });
