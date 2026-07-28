@@ -106,6 +106,8 @@ class GameEngine {
     }
 
     startNewGame() {
+        this.canvas.width = window.innerWidth;
+        this.canvas.height = window.innerHeight;
         this.player = new PlayerFish(0, 0);
         this.camera = { x: 0, y: 0 };
         this.enemies = [];

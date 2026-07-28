@@ -660,8 +660,6 @@ body, html {
     left: 50%;
     width: 56px;
     height: 56px;
-    margin-top: -28px;
-    margin-left: -28px;
     border-radius: 50%;
     background: radial-gradient(circle, #00f2fe, #0284c7);
     border: 2.5px solid #ffffff;
