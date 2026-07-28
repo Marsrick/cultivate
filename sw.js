@@ -1,4 +1,4 @@
-const CACHE_NAME = 'xiuxian-v3';
+const CACHE_NAME = 'xiuxian-v4';
 const STATIC_ASSETS = [
     './',
     './index.html',
