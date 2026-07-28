@@ -118,7 +118,18 @@ class PlayerFish {
 
         ctx.save();
         ctx.translate(this.x, this.y);
-        ctx.rotate(this.angle + Math.PI);
+
+        // 自然游动姿态修正：确保鱼背永远朝上，绝不出现倒立或仰泳
+        const isFacingRight = Math.cos(this.angle) >= 0;
+        if (isFacingRight) {
+            ctx.scale(-1, 1);
+            ctx.rotate(-this.angle);
+        } else {
+            let rot = this.angle - Math.PI;
+            while (rot < -Math.PI) rot += Math.PI * 2;
+            while (rot > Math.PI) rot -= Math.PI * 2;
+            ctx.rotate(rot);
+        }
 
         // 底层软光晕
         const aura = ctx.createRadialGradient(0, 0, r * 0.4, 0, 0, r * 1.5);
@@ -239,8 +250,18 @@ class EnemyFish {
 
         ctx.save();
         ctx.translate(this.x, this.y);
-        // 关键修复：敌鱼图片原图鱼头朝左，旋转角增加 Math.PI，完全对齐实际物理移动角度 (this.angle)
-        ctx.rotate(this.angle + Math.PI);
+
+        // 自然游动姿态修正：确保鱼背永远朝上，绝不出现倒立或仰泳
+        const isFacingRight = Math.cos(this.angle) >= 0;
+        if (isFacingRight) {
+            ctx.scale(-1, 1);
+            ctx.rotate(-this.angle);
+        } else {
+            let rot = this.angle - Math.PI;
+            while (rot < -Math.PI) rot += Math.PI * 2;
+            while (rot > Math.PI) rot -= Math.PI * 2;
+            ctx.rotate(rot);
+        }
 
         const fIdx = this.getFrameIndex();
         const frames = STAGE_MOTION_FRAMES[this.stageIdx];
@@ -255,9 +276,10 @@ class EnemyFish {
             ctx.fill();
         }
 
-        // 绘制等级与精英标志（重置旋转视角，保证文字水平书写）
+        // 绘制等级与精英标志（重置坐标，保证文字在鱼头上方水平书写）
+        ctx.restore(); // 恢复当前鱼体旋转缩放，单独绘制 UI 文字
         ctx.save();
-        ctx.rotate(-(this.angle + Math.PI));
+        ctx.translate(this.x, this.y);
         if (this.isElite) {
             ctx.fillStyle = "#ffe169";
             ctx.font = "bold 13px sans-serif";

@@ -64,29 +64,14 @@ class SeaMapManager {
             const imgW = this.bgImg.width;
             const imgH = this.bgImg.height;
 
-            // 视差无缝镜像拼接渲染：根据世界视角坐标定位 Tile 索引，偶数正向、奇数镜像翻转，完全消除横竖衔接缝隙
-            const worldX = camera.x * 0.5 - w / 2;
-            const worldY = camera.y * 0.5 - h / 2;
+            // 视差无缝平铺：保持建筑与海域景观天然正立姿态，配合预处理缝隙算法
+            const offsetX = (-(camera.x * 0.5) % imgW + imgW) % imgW;
+            const offsetY = (-(camera.y * 0.5) % imgH + imgH) % imgH;
 
-            const startCol = Math.floor(worldX / imgW);
-            const endCol = Math.floor((worldX + w) / imgW);
-            const startRow = Math.floor(worldY / imgH);
-            const endRow = Math.floor((worldY + h) / imgH);
-
-            for (let r = startRow; r <= endRow; r++) {
-                for (let c = startCol; c <= endCol; c++) {
-                    const drawX = Math.floor(c * imgW - worldX);
-                    const drawY = Math.floor(r * imgH - worldY);
-
-                    const flipX = Math.abs(c) % 2 === 1;
-                    const flipY = Math.abs(r) % 2 === 1;
-
-                    ctx.save();
-                    ctx.translate(drawX + (flipX ? imgW : 0), drawY + (flipY ? imgH : 0));
-                    ctx.scale(flipX ? -1 : 1, flipY ? -1 : 1);
-                    // 增加 1.5px 极小绘制重叠，彻底消除 Canvas 高分屏亚像素线条
-                    ctx.drawImage(this.bgImg, 0, 0, imgW + 1.5, imgH + 1.5);
-                    ctx.restore();
+            // 无缝平铺背景，添加 1.5px 极小重叠防止 Canvas 亚像素缝隙黑线
+            for (let x = offsetX - imgW; x < w + imgW; x += imgW) {
+                for (let y = offsetY - imgH; y < h + imgH; y += imgH) {
+                    ctx.drawImage(this.bgImg, Math.floor(x), Math.floor(y), imgW + 1.5, imgH + 1.5);
                 }
             }
         } else {
