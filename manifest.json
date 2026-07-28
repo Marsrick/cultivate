@@ -1,0 +1,24 @@
+{
+  "name": "吞噬成鲲 - 修仙进化手游",
+  "short_name": "吞噬成鲲",
+  "description": "2D修仙吞噬进化手游，从微小蝌蚪逆天进化为北冥巨鲲与九天金鹏！",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#020c1b",
+  "theme_color": "#0a355c",
+  "icons": [
+    {
+      "src": "assets/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "assets/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
