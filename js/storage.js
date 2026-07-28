@@ -10,16 +10,18 @@ class StorageManager {
 
     getDefaultData() {
         return {
+            saveVersion: 2,
             userName: "深海小虾米",
             level: 12,
             coins: 23680,
             stamina: 85,
             maxStamina: 120,
             gems: 1280,
-            highestStage: 7, // 鲨鱼阶段
+            highestStage: 8, // 鲨鱼阶段（第 7 阶现为海豚）
+            menuStage: 4,
             currentSkin: "skin_default",
             unlockedSkins: ["skin_default"],
-            unlockedBios: ["tadpole", "shrimp", "fry", "clownfish", "black_carp", "puffer", "koi", "catfish", "shark"],
+            unlockedBios: ["tadpole", "fry", "black_carp", "koi", "catfish", "electric_eel", "dolphin", "shark"],
             upgrades: {
                 speed: 4,
                 range: 3,
@@ -45,7 +47,15 @@ class StorageManager {
         try {
             const raw = localStorage.getItem(this.STORAGE_KEY);
             if (raw) {
-                return Object.assign(this.getDefaultData(), JSON.parse(raw));
+                const saved = JSON.parse(raw);
+                if ((saved.saveVersion || 1) < 2) {
+                    // v1 的 7–9 阶分别对应现在的 8–10 阶，迁移旧记录避免贴图与名称错位。
+                    if (saved.highestStage >= 7 && saved.highestStage < 10) {
+                        saved.highestStage += 1;
+                    }
+                    saved.saveVersion = 2;
+                }
+                return Object.assign(this.getDefaultData(), saved);
             }
         } catch (e) {
             console.warn("Save load error:", e);

@@ -1,0 +1,19 @@
+dist/
+tmp/
+design-qa*.png
+
+# Keep the deployable art set while excluding unused source variants.
+assets/creatures/*
+!assets/creatures/card_stage_1_tadpole.png
+!assets/creatures/card_stage_2_fry.png
+!assets/creatures/card_stage_3_blackcarp.png
+!assets/creatures/card_stage_5_puffer.png
+!assets/creatures/card_stage_6_squid.png
+!assets/creatures/card_stage_7_dolphin.png
+!assets/creatures/card_stage_7_eel.png
+!assets/creatures/card_stage_8_shark.png
+!assets/creatures/card_stage_9_dragon.png
+!assets/creatures/card_stage_10_kun.png
+assets/creatures_motion/motion_stage_*.png
+assets/creatures_trans/
+assets/ui_sliced/

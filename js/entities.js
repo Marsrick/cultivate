@@ -25,11 +25,13 @@ class PlayerFish {
         this.isDashing = false;
         this.dashTimer = 0;
         this.dashCD = 0;
+        this.dashCooldownMultiplier = 1;
         this.hasShield = false;
         this.shieldTimer = 0;
         this.isHurt = false;
         this.hurtTimer = 0;
         this.isDead = false;
+        this.spawnProtectionTimer = 12;
 
         this.animTime = 0;
     }
@@ -42,7 +44,8 @@ class PlayerFish {
         this.animTime += dt;
 
         const info = this.getStageInfo();
-        let speed = info.speed * (1 + upgradeMultipliers.speedBonus);
+            // 数据中的速度沿用原 60fps 手感，但位移按 dt 结算，避免高刷新率设备移动过快。
+            let speed = info.speed * 60 * (1 + upgradeMultipliers.speedBonus);
 
         if (this.dashCD > 0) this.dashCD -= dt;
         if (this.isDashing) {
@@ -65,6 +68,10 @@ class PlayerFish {
             if (this.hurtTimer <= 0) this.isHurt = false;
         }
 
+        if (this.spawnProtectionTimer > 0) {
+            this.spawnProtectionTimer = Math.max(0, this.spawnProtectionTimer - dt);
+        }
+
         const isMovingInput = (inputVector.x !== 0 || inputVector.y !== 0);
         if (isMovingInput) {
             const targetAngle = Math.atan2(inputVector.y, inputVector.x);
@@ -72,17 +79,19 @@ class PlayerFish {
             let diff = targetAngle - this.angle;
             while (diff < -Math.PI) diff += Math.PI * 2;
             while (diff > Math.PI) diff -= Math.PI * 2;
-            this.angle += diff * 0.18;
+            const turnLerp = 1 - Math.pow(1 - 0.18, dt * 60);
+            this.angle += diff * turnLerp;
 
             this.vx = Math.cos(this.angle) * speed;
             this.vy = Math.sin(this.angle) * speed;
         } else {
-            this.vx *= 0.90;
-            this.vy *= 0.90;
+            const drag = Math.pow(0.90, dt * 60);
+            this.vx *= drag;
+            this.vy *= drag;
         }
 
-        this.x += this.vx;
-        this.y += this.vy;
+        this.x += this.vx * dt;
+        this.y += this.vy * dt;
 
         if (this.comboTimer > 0) {
             this.comboTimer -= dt;
@@ -94,7 +103,7 @@ class PlayerFish {
         if (this.dashCD <= 0) {
             this.isDashing = true;
             this.dashTimer = 1.2;
-            this.dashCD = 4.0;
+            this.dashCD = 4.0 * this.dashCooldownMultiplier;
             if (window.soundEngine) window.soundEngine.playDash();
             return true;
         }
@@ -124,6 +133,24 @@ class PlayerFish {
         const r = info.radius;
         const color = skinColor || info.color;
 
+        // Keep the player readable against detailed scenery and similarly sized creatures.
+        const markerRadius = Math.max(34, r * 2.5);
+        ctx.save();
+        ctx.translate(this.x, this.y);
+        ctx.shadowColor = 'rgba(0, 242, 254, 0.9)';
+        ctx.shadowBlur = 12;
+        ctx.strokeStyle = 'rgba(126, 249, 255, 0.92)';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.arc(0, 0, markerRadius, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.shadowBlur = 5;
+        ctx.fillStyle = '#fff4b0';
+        ctx.font = '700 13px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('主角', 0, -markerRadius - 9);
+        ctx.restore();
+
         ctx.save();
         const cosA = Math.cos(this.angle);
         const sinA = Math.sin(this.angle);
@@ -152,7 +179,14 @@ class PlayerFish {
 
         if (sprite && sprite.complete && sprite.naturalWidth > 0) {
             // 视觉物理重心微调：补偿纹理留白，保证主角 100.0% 精确居中于 (0,0)
-            ctx.drawImage(sprite, -r * 1.5, -r * 1.02, r * 3, r * 2.2);
+            const visualScale = Math.max(1.3, 3.6 - this.stageIdx * 0.23);
+            ctx.drawImage(
+                sprite,
+                -r * 1.5 * visualScale,
+                -r * 1.02 * visualScale,
+                r * 3 * visualScale,
+                r * 2.2 * visualScale
+            );
         } else {
             ctx.fillStyle = color;
             ctx.beginPath();
@@ -174,6 +208,19 @@ class PlayerFish {
             ctx.beginPath();
             ctx.arc(0, 0, r * 1.35, 0, Math.PI * 2);
             ctx.stroke();
+        }
+
+        if (this.spawnProtectionTimer > 0) {
+            const pulse = 0.82 + Math.sin(this.animTime * 7) * 0.12;
+            ctx.globalAlpha = pulse;
+            ctx.strokeStyle = '#ffd86a';
+            ctx.lineWidth = 3;
+            ctx.setLineDash([8, 7]);
+            ctx.beginPath();
+            ctx.arc(0, 0, r * 1.65, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.setLineDash([]);
+            ctx.globalAlpha = 1;
         }
 
         ctx.restore();
@@ -205,7 +252,7 @@ class EnemyFish {
         this.changeDirTimer -= dt;
 
         const info = this.getStageInfo();
-        let speed = info.speed * 0.65;
+        let speed = info.speed * 60 * 0.65;
 
         // 定时随机巡航转向
         if (this.changeDirTimer <= 0) {
@@ -215,7 +262,10 @@ class EnemyFish {
 
         // AI 避让大鱼，追逐小鱼
         const dist = Math.hypot(player.x - this.x, player.y - this.y);
-        if (dist < 320) {
+        if (player.spawnProtectionTimer > 0 && this.stageIdx > player.stageIdx && dist < 560) {
+            this.targetAngle = Math.atan2(this.y - player.y, this.x - player.x);
+            speed *= 1.2;
+        } else if (dist < 320) {
             if (this.stageIdx < player.stageIdx) {
                 // 逃跑：背向玩家
                 this.targetAngle = Math.atan2(this.y - player.y, this.x - player.x);
@@ -231,13 +281,14 @@ class EnemyFish {
         let diff = this.targetAngle - this.angle;
         while (diff < -Math.PI) diff += Math.PI * 2;
         while (diff > Math.PI) diff -= Math.PI * 2;
-        this.angle += diff * 0.12;
+        const turnLerp = 1 - Math.pow(1 - 0.12, dt * 60);
+        this.angle += diff * turnLerp;
 
         this.vx = Math.cos(this.angle) * speed;
         this.vy = Math.sin(this.angle) * speed;
 
-        this.x += this.vx;
-        this.y += this.vy;
+        this.x += this.vx * dt;
+        this.y += this.vy * dt;
     }
 
     getFrameIndex() {
@@ -271,7 +322,14 @@ class EnemyFish {
         const sprite = frames ? frames[fIdx] : null;
 
         if (sprite && sprite.complete && sprite.naturalWidth > 0) {
-            ctx.drawImage(sprite, -r * 1.4, -r * 1.0, r * 2.8, r * 2.0);
+            const visualScale = Math.max(1.05, 2.3 - this.stageIdx * 0.13);
+            ctx.drawImage(
+                sprite,
+                -r * 1.4 * visualScale,
+                -r * 1.0 * visualScale,
+                r * 2.8 * visualScale,
+                r * 2.0 * visualScale
+            );
         } else {
             ctx.fillStyle = info.color;
             ctx.beginPath();
@@ -296,8 +354,6 @@ class EnemyFish {
             ctx.shadowBlur = 4;
             ctx.fillText(`Lv.${this.stageIdx + 1}`, -14, -r - 6);
         }
-        ctx.restore();
-
         ctx.restore();
     }
 }
@@ -337,8 +393,8 @@ class ParticleFX {
     update(dt) {
         for (let i = this.particles.length - 1; i >= 0; i--) {
             const p = this.particles[i];
-            p.x += p.vx;
-            p.y += p.vy;
+            p.x += p.vx * 60 * dt;
+            p.y += p.vy * 60 * dt;
             p.life -= dt;
             p.alpha = Math.max(0, p.life / 0.4);
             if (p.life <= 0) this.particles.splice(i, 1);
@@ -346,7 +402,7 @@ class ParticleFX {
 
         for (let i = this.floaters.length - 1; i >= 0; i--) {
             const f = this.floaters[i];
-            f.y -= 1.2;
+            f.y -= 72 * dt;
             f.life -= dt;
             f.alpha = Math.max(0, f.life / 0.8);
             if (f.life <= 0) this.floaters.splice(i, 1);

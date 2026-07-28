@@ -1,4 +1,7 @@
-const CACHE_NAME = 'xiuxian-v9';
+const CACHE_NAME = 'xiuxian-v23';
+const MOTION_ASSETS = Array.from({ length: 10 }, (_, stageIdx) => (
+    Array.from({ length: 8 }, (_, frameIdx) => `./assets/creatures_motion/stage_${stageIdx + 1}_frame_${frameIdx}.png`)
+)).flat();
 const STATIC_ASSETS = [
     './',
     './index.html',
@@ -13,10 +16,30 @@ const STATIC_ASSETS = [
     './js/storage.js',
     './assets/bg_underwater_ocean.png',
     './assets/bg_underwater_temple.png',
+    './assets/ui_generated/btn_start.png',
+    './assets/ui_refined/avatar_player.png',
+    './assets/ui_refined/btn_tasks.png',
+    './assets/ui_refined/btn_biopedia.png',
+    './assets/ui_refined/btn_growth.png',
+    './assets/ui_refined/btn_skins.png',
+    './assets/ui_refined/btn_start.png',
+    './assets/ui_refined/title_logo.png',
+    './assets/ui_refined/btn_settings.png',
+    './assets/creatures/card_stage_1_tadpole.png',
+    './assets/creatures/card_stage_2_fry.png',
+    './assets/creatures/card_stage_10_kun.png',
+    './assets/creatures/card_stage_5_puffer.png',
+    './assets/creatures/card_stage_3_blackcarp.png',
+    './assets/creatures/card_stage_7_eel.png',
+    './assets/creatures/card_stage_7_dolphin.png',
+    './assets/creatures/card_stage_8_shark.png',
+    './assets/creatures/card_stage_9_dragon.png',
+    './assets/creatures/card_stage_6_squid.png',
     './assets/icons/icon-192.png',
     './assets/icons/icon-512.png',
     './assets/icons/apple-touch-icon.png',
-    './favicon.ico'
+    './favicon.ico',
+    ...MOTION_ASSETS
 ];
 
 // 安装 Service Worker
@@ -24,7 +47,7 @@ self.addEventListener('install', (event) => {
     self.skipWaiting();
     event.waitUntil(
         caches.open(CACHE_NAME).then((cache) => {
-            console.log('[SW] Pre-caching v3 assets');
+            console.log('[SW] Pre-caching v23 assets');
             return cache.addAll(STATIC_ASSETS);
         })
     );

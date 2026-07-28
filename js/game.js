@@ -19,6 +19,7 @@ class GameEngine {
         this.survivalTime = 0;
         this.devourCount = 0;
         this.eliteDefeated = 0;
+        this.maxCombo = 0;
         this.hasRevived = false;
 
         this.initCanvasSize();
@@ -90,19 +91,21 @@ class GameEngine {
     updateHeaderUI() {
         const data = window.storageManager.data;
         document.getElementById('user-name').innerText = data.userName;
-        document.getElementById('user-level').innerText = `Lv.${data.level}`;
+        document.getElementById('user-level').innerText = data.level;
+        const levelText = document.getElementById('user-level-text');
+        if (levelText) levelText.innerText = `Lv.${data.level}`;
         document.getElementById('res-coins').innerText = data.coins;
         document.getElementById('res-stamina').innerText = `${data.stamina}/${data.maxStamina}`;
         document.getElementById('res-gems').innerText = data.gems;
 
-        const currentStageInfo = EVOLUTION_STAGES[data.highestStage - 1] || EVOLUTION_STAGES[0];
-        document.getElementById('highest-stage-name').innerText = `最高记录：${currentStageInfo.name}阶段`;
+        const highestStageInfo = EVOLUTION_STAGES[data.highestStage - 1] || EVOLUTION_STAGES[0];
+        const showcaseStageInfo = EVOLUTION_STAGES[(data.menuStage || 4) - 1] || EVOLUTION_STAGES[3];
+        document.getElementById('highest-stage-name').innerHTML = `最高记录：<span>${highestStageInfo.name}阶段</span>`;
 
         // 皮肤标签更新
         const skinInfo = SKINS_DATABASE.find(s => s.id === data.currentSkin);
         const skinTag = document.getElementById('hero-current-form');
-        const pStageName = (this.player && this.player.getStageInfo()) ? this.player.getStageInfo().name : currentStageInfo.name;
-        if (skinTag) skinTag.innerText = `当前形态：${pStageName} (${skinInfo ? skinInfo.name : '默认'})`;
+        if (skinTag) skinTag.innerHTML = `当前形态：<span>${showcaseStageInfo.name}</span>`;
     }
 
     startNewGame() {
@@ -114,6 +117,7 @@ class GameEngine {
         this.survivalTime = 0;
         this.devourCount = 0;
         this.eliteDefeated = 0;
+        this.maxCombo = 0;
         this.hasRevived = false;
 
         // 局外升级加成
@@ -121,8 +125,10 @@ class GameEngine {
         this.upgradeMultipliers = {
             speedBonus: (up.speed || 0) * 0.03,
             rangeBonus: (up.range || 0) * 0.04,
-            expBonus: (up.exp_bonus || 0) * 0.05
+            expBonus: (up.exp_bonus || 0) * 0.05,
+            dashCdReduction: Math.min(0.5, (up.dash_cd || 0) * 0.05)
         };
+        this.player.dashCooldownMultiplier = 1 - this.upgradeMultipliers.dashCdReduction;
 
         // 初始刷怪（确保玩家周围安全）
         for (let i = 0; i < 35; i++) {
@@ -134,11 +140,6 @@ class GameEngine {
     }
 
     spawnEnemy() {
-        const angle = Math.random() * Math.PI * 2;
-        const dist = Math.random() * 800 + 450;
-        const ex = this.player.x + Math.cos(angle) * dist;
-        const ey = this.player.y + Math.sin(angle) * dist;
-
         // 控难生成：70% 刷出较小可吞噬生物，30% 刷出危险生物
         let enemyStage;
         if (Math.random() < 0.7) {
@@ -146,6 +147,12 @@ class GameEngine {
         } else {
             enemyStage = Math.min(EVOLUTION_STAGES.length - 1, this.player.stageIdx + 1 + Math.floor(Math.random() * 2));
         }
+
+        const angle = Math.random() * Math.PI * 2;
+        const safeDistance = enemyStage > this.player.stageIdx ? 900 : 450;
+        const dist = Math.random() * 800 + safeDistance;
+        const ex = this.player.x + Math.cos(angle) * dist;
+        const ey = this.player.y + Math.sin(angle) * dist;
 
         let isElite = Math.random() < 0.08;
         this.enemies.push(new EnemyFish(ex, ey, enemyStage, isElite));
@@ -195,6 +202,7 @@ class GameEngine {
             if (modalId === 'modal-biopedia') this.renderBiopediaUI();
             if (modalId === 'modal-growth') this.renderGrowthUI();
             if (modalId === 'modal-skins') this.renderSkinsUI();
+            if (modalId === 'modal-settings') this.renderSettingsUI();
         }
     }
 
@@ -244,6 +252,12 @@ class GameEngine {
         this.mapManager.update(dt);
         this.particles.update(dt);
 
+        // 1:1 绝对视角锁死：每帧平移相机坐标完全等于主角坐标
+        if (this.player) {
+            this.camera.x = this.player.x;
+            this.camera.y = this.player.y;
+        }
+
         // 离远清理与怪物动态补充
         for (let i = this.enemies.length - 1; i >= 0; i--) {
             const e = this.enemies[i];
@@ -275,6 +289,7 @@ class GameEngine {
 
                     this.player.combo++;
                     this.player.comboTimer = 3.0;
+                    this.maxCombo = Math.max(this.maxCombo, this.player.combo);
 
                     let gainExp = eStageInfo.reqExp * 0.3 * (1 + this.upgradeMultipliers.expBonus);
                     if (this.player.combo > 1) gainExp *= (1 + Math.min(1.0, this.player.combo * 0.05));
@@ -295,7 +310,9 @@ class GameEngine {
                     }
                 } else {
                     // 被大鱼碰撞：受创或致死
-                    if (this.player.hasShield) {
+                    if (this.player.spawnProtectionTimer > 0) {
+                        this.enemies.splice(i, 1);
+                    } else if (this.player.hasShield) {
                         this.player.hasShield = false;
                         this.enemies.splice(i, 1);
                         this.showToast("🛡️ 护盾抵挡了一次致命攻击！");
@@ -346,6 +363,7 @@ class GameEngine {
         this.hasRevived = true;
         this.player.hasShield = true;
         this.player.shieldTimer = 3.0;
+        this.player.spawnProtectionTimer = 3.0;
         this.switchState("PLAYING");
         document.getElementById('modal-revive').classList.remove('active');
         this.showToast("✨ 复活成功！获得 3 秒护盾保护");
@@ -422,10 +440,7 @@ class GameEngine {
         const claimed = window.storageManager.data.claimedTasks || [];
         container.innerHTML = TASK_LIST.map(task => {
             const isClaimed = claimed.includes(task.id);
-            let progress = 0;
-            if (task.id === 'task_1') progress = Math.min(task.req, this.devourCount);
-            else if (task.id === 'task_2') progress = Math.min(task.req, Math.floor(this.survivalTime));
-            else progress = Math.min(task.req, this.devourCount);
+            const progress = this.getTaskProgress(task);
 
             const canClaim = !isClaimed && progress >= task.req;
 
@@ -450,6 +465,10 @@ class GameEngine {
     claimTask(taskId) {
         const task = TASK_LIST.find(t => t.id === taskId);
         if (task) {
+            if (this.getTaskProgress(task) < task.req) {
+                this.showToast("任务尚未完成");
+                return;
+            }
             window.storageManager.data.claimedTasks = window.storageManager.data.claimedTasks || [];
             if (!window.storageManager.data.claimedTasks.includes(taskId)) {
                 window.storageManager.data.claimedTasks.push(taskId);
@@ -461,39 +480,70 @@ class GameEngine {
         }
     }
 
+    getTaskProgress(task) {
+        let progress = 0;
+        if (task.id === 'task_1') progress = this.devourCount;
+        else if (task.id === 'task_2') progress = Math.floor(this.survivalTime);
+        else if (task.id === 'task_3') progress = this.maxCombo;
+        else if (task.id === 'task_4') {
+            const runStage = this.player ? this.player.stageIdx + 1 : 1;
+            progress = Math.max(runStage, window.storageManager.data.highestStage || 1);
+        } else if (task.id === 'task_5') progress = this.eliteDefeated;
+        return Math.min(task.req, progress);
+    }
+
     renderBiopediaUI() {
         const grid = document.getElementById('biopedia-grid');
         if (!grid) return;
-        const unlocked = window.storageManager.data.unlockedBios;
-        const cardNames = [
-            'card_stage_1_tadpole.png', 'card_stage_2_fry.png', 'card_stage_3_blackcarp.png',
-            'card_stage_4_koi.png', 'card_stage_5_puffer.png', 'card_stage_6_squid.png',
-            'card_stage_7_eel.png', 'card_stage_8_shark.png', 'card_stage_9_dragon.png', 'card_stage_10_kun.png'
-        ];
-        grid.innerHTML = BIOPEDIA_DATABASE.slice(0, 10).map((bio, idx) => {
-            const isUnlocked = unlocked.includes(bio.id) || idx < 6;
-            const cardImg = cardNames[idx] || cardNames[0];
+        const bios = [...BIOPEDIA_DATABASE].sort((a, b) => a.level - b.level);
+        const highestStage = Math.max(1, Math.min(10, Number(window.storageManager.data.highestStage) || 1));
+        const unlockedCount = bios.filter((bio) => bio.level <= highestStage).length;
+        const progress = document.getElementById('biopedia-progress');
+        if (progress) progress.innerText = `${unlockedCount} / ${bios.length} 已解锁`;
+
+        grid.innerHTML = bios.map((bio) => {
+            const isUnlocked = bio.level <= highestStage;
             return `
-                <div class="bio-card ${isUnlocked ? '' : 'locked'}" style="padding:0;overflow:hidden;border:none;box-shadow:0 6px 15px rgba(0,0,0,0.6);" onclick="window.gameEngine.showBioDetail(${idx})">
-                    <img src="assets/creatures/${cardImg}" style="width:100%;height:auto;display:block;border-radius:10px;">
-                </div>
+                <button
+                    type="button"
+                    class="bio-card ${isUnlocked ? '' : 'locked'}"
+                    data-bio-id="${bio.id}"
+                    aria-label="${bio.level}阶 ${bio.name}${isUnlocked ? '，查看详情' : '，未解锁'}"
+                    ${isUnlocked ? '' : 'disabled'}
+                >
+                    <img src="assets/creatures/${bio.card}" alt="${bio.level}阶 ${bio.name}" loading="eager">
+                    ${isUnlocked ? '' : `<span class="bio-lock-label">达到 ${bio.level} 阶解锁</span>`}
+                </button>
             `;
         }).join('');
+
+        grid.querySelectorAll('.bio-card:not(:disabled)').forEach((card) => {
+            card.addEventListener('click', () => this.showBioDetail(card.dataset.bioId));
+        });
     }
 
-    showBioDetail(idx) {
-        const bio = BIOPEDIA_DATABASE[idx];
+    showBioDetail(bioId) {
+        const bio = BIOPEDIA_DATABASE.find((item) => item.id === bioId);
         if (!bio) return;
-        const cardNames = [
-            'card_stage_1_tadpole.png', 'card_stage_2_fry.png', 'card_stage_3_blackcarp.png',
-            'card_stage_4_koi.png', 'card_stage_5_puffer.png', 'card_stage_6_squid.png',
-            'card_stage_7_eel.png', 'card_stage_8_shark.png', 'card_stage_9_dragon.png', 'card_stage_10_kun.png'
-        ];
-        document.getElementById('bio-detail-name').innerText = `${bio.level}阶 ${bio.name}`;
-        document.getElementById('bio-detail-habitat').innerText = `生活海域：${bio.habitat}`;
-        document.getElementById('bio-detail-exp').innerText = `吞噬经验：${bio.exp} EXP`;
+        const highestStage = Math.max(1, Math.min(10, Number(window.storageManager.data.highestStage) || 1));
+        if (bio.level > highestStage) return;
+
+        const typeLabels = {
+            common: '普通形态',
+            rare: '稀有形态',
+            epic: '强袭形态',
+            mythic: '神话形态'
+        };
+        document.getElementById('bio-detail-title').innerText = `${bio.level}阶形态档案`;
+        document.getElementById('bio-detail-stage').innerText = `${bio.level}阶`;
+        document.getElementById('bio-detail-type').innerText = typeLabels[bio.type] || '进化形态';
+        document.getElementById('bio-detail-name').innerText = bio.name;
+        document.getElementById('bio-detail-habitat').innerText = bio.habitat;
+        document.getElementById('bio-detail-exp').innerText = `${bio.exp} EXP`;
         document.getElementById('bio-detail-story').innerText = bio.story;
-        document.getElementById('bio-detail-img').src = `assets/creatures/${cardNames[idx]}`;
+        const detailImg = document.getElementById('bio-detail-img');
+        detailImg.src = `assets/creatures/${bio.card}`;
+        detailImg.alt = `${bio.level}阶 ${bio.name}完整图鉴卡`;
 
         document.getElementById('modal-bio-detail').classList.add('active');
     }
@@ -513,17 +563,25 @@ class GameEngine {
                             ${Array.from({length: item.maxLv}).map((_, idx) => `<div class="level-dot ${idx < curLv ? 'active' : ''}"></div>`).join('')}
                         </div>
                     </div>
-                    <button class="game-btn btn-primary" onclick="window.gameEngine.buyUpgrade('${item.id}', ${cost})">
-                        🪙 ${cost}
+                    <button class="game-btn ${curLv >= item.maxLv ? 'btn-secondary' : 'btn-primary'}" ${curLv >= item.maxLv ? 'disabled' : ''} onclick="window.gameEngine.buyUpgrade('${item.id}')">
+                        ${curLv >= item.maxLv ? '已满级' : `🪙 ${cost}`}
                     </button>
                 </div>
             `;
         }).join('');
     }
 
-    buyUpgrade(itemId, cost) {
+    buyUpgrade(itemId) {
+        const item = UPGRADE_ITEMS.find(entry => entry.id === itemId);
+        if (!item) return;
+        const currentLevel = window.storageManager.data.upgrades[itemId] || 0;
+        if (currentLevel >= item.maxLv) {
+            this.showToast("该强化已经满级");
+            return;
+        }
+        const cost = item.baseCost + currentLevel * item.costInc;
         if (window.storageManager.deductCoins(cost)) {
-            window.storageManager.data.upgrades[itemId] = (window.storageManager.data.upgrades[itemId] || 0) + 1;
+            window.storageManager.data.upgrades[itemId] = currentLevel + 1;
             window.storageManager.save();
             this.showToast("升级成功！属性已提升");
             this.updateHeaderUI();
@@ -539,14 +597,15 @@ class GameEngine {
         const data = window.storageManager.data;
         container.innerHTML = SKINS_DATABASE.map(skin => {
             const isEquipped = data.currentSkin === skin.id;
+            const isUnlocked = (data.unlockedSkins || []).includes(skin.id) || skin.unlocked;
             return `
                 <div class="upgrade-row">
                     <div class="upgrade-meta">
                         <div class="upgrade-name" style="color:${skin.glow};">${skin.name} (${skin.category})</div>
                         <div style="font-size:12px;color:#94a3b8;">${skin.desc}</div>
                     </div>
-                    <button class="game-btn ${isEquipped ? 'btn-secondary' : 'btn-primary'}" onclick="window.gameEngine.equipSkin('${skin.id}')">
-                        ${isEquipped ? '使用中' : '使用'}
+                    <button class="game-btn ${isEquipped ? 'btn-secondary' : 'btn-primary'}" ${isEquipped ? 'disabled' : ''} onclick="window.gameEngine.equipSkin('${skin.id}')">
+                        ${isEquipped ? '使用中' : isUnlocked ? '使用' : `🪙 ${skin.price} 解锁`}
                     </button>
                 </div>
             `;
@@ -554,9 +613,21 @@ class GameEngine {
     }
 
     equipSkin(skinId) {
-        window.storageManager.data.currentSkin = skinId;
+        const skin = SKINS_DATABASE.find(entry => entry.id === skinId);
+        if (!skin) return;
+        const data = window.storageManager.data;
+        data.unlockedSkins = data.unlockedSkins || ['skin_default'];
+        const isUnlocked = data.unlockedSkins.includes(skinId) || skin.unlocked;
+        if (!isUnlocked) {
+            if (!window.storageManager.deductCoins(skin.price)) {
+                this.showToast("金币不足，无法解锁该皮肤");
+                return;
+            }
+            data.unlockedSkins.push(skinId);
+        }
+        data.currentSkin = skinId;
         window.storageManager.save();
-        this.showToast("成功穿戴新皮肤！");
+        this.showToast(isUnlocked ? "成功穿戴新皮肤！" : "皮肤已解锁并穿戴！");
         this.updateHeaderUI();
         this.renderSkinsUI();
     }
@@ -565,6 +636,18 @@ class GameEngine {
         window.storageManager.data.settings[key] = value;
         window.storageManager.save();
         this.showToast("设置已保存！");
+    }
+
+    renderSettingsUI() {
+        const settings = window.storageManager.data.settings || {};
+        const sfx = document.getElementById('setting-sfx');
+        const danger = document.getElementById('setting-danger');
+        const taskTrack = document.getElementById('setting-tasktrack');
+        const joystick = document.getElementById('setting-joystick');
+        if (sfx) sfx.checked = settings.sfx !== false;
+        if (danger) danger.checked = settings.dangerAlert !== false;
+        if (taskTrack) taskTrack.checked = settings.taskTrack !== false;
+        if (joystick) joystick.value = settings.joystickMode || 'floating';
     }
 }
 

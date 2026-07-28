@@ -7,12 +7,13 @@
     <!-- PWA Web App Meta & Manifest -->
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0a355c">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="吞噬成鲲">
     <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
     <link rel="icon" type="image/x-icon" href="favicon.ico">
-    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/style.css?v=23">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&display=swap" rel="stylesheet">
@@ -45,14 +46,18 @@
                 <div class="top-header">
                     <div class="user-profile">
                         <div class="user-avatar-frame">
-                            <svg viewBox="0 0 40 40" style="width:36px;height:36px;">
-                                <circle cx="20" cy="13" r="9" fill="#ffe169"/>
-                                <path d="M6 35 C6 23 34 23 34 35 Z" fill="#ffe169"/>
-                            </svg>
-                            <div id="user-level" class="user-level-badge">Lv.12</div>
+                            <img src="assets/ui_refined/avatar_player.png" class="user-avatar-img" alt="深海小虾米头像">
+                            <div id="user-level" class="user-level-badge">12</div>
                         </div>
                         <div class="user-info">
-                            <div id="user-name" class="user-name">深海小虾米</div>
+                            <div class="user-name-line">
+                                <div id="user-name" class="user-name">深海小虾米</div>
+                                <span class="profile-mark" aria-hidden="true">◉</span>
+                            </div>
+                            <div class="user-progress-row">
+                                <span id="user-level-text" class="user-level-text">Lv.12</span>
+                                <span class="user-progress-track" aria-label="等级进度 46%"><span class="user-progress-fill"></span></span>
+                            </div>
                         </div>
                     </div>
 
@@ -79,58 +84,62 @@
                                 <span class="resource-add-btn">+</span>
                             </div>
                         </div>
-                        <div id="btn-settings" class="settings-btn">⚙️</div>
+                        <button id="btn-settings" class="settings-btn" type="button" aria-label="设置">
+                            <img src="assets/ui_refined/btn_settings.png" class="settings-button-img" alt="">
+                            <span class="settings-label">设置</span>
+                        </button>
                     </div>
                 </div>
 
                 <!-- 首页中央与四角修仙玉石大按钮 -->
                 <div class="home-center-content">
                     <!-- 左上：任务 -->
-                    <div id="btn-menu-tasks" class="corner-menu-btn corner-top-left">
-                        <img src="assets/ui_generated/btn_tasks.png" class="corner-btn-img" alt="任务">
+                    <button id="btn-menu-tasks" type="button" class="corner-menu-btn corner-top-left" aria-label="任务">
+                        <img src="assets/ui_refined/btn_tasks.png" class="corner-btn-img" alt="">
                         <div id="dot-tasks" class="red-dot"></div>
-                    </div>
+                    </button>
 
                     <!-- 左下：图鉴 -->
-                    <div id="btn-menu-biopedia" class="corner-menu-btn corner-bottom-left">
-                        <img src="assets/ui_generated/btn_biopedia.png" class="corner-btn-img" alt="图鉴">
-                    </div>
+                    <button id="btn-menu-biopedia" type="button" class="corner-menu-btn corner-bottom-left" aria-label="图鉴">
+                        <img src="assets/ui_refined/btn_biopedia.png" class="corner-btn-img" alt="">
+                    </button>
 
                     <!-- 右上：成长 -->
-                    <div id="btn-menu-growth" class="corner-menu-btn corner-top-right">
-                        <img src="assets/ui_generated/btn_growth.png" class="corner-btn-img" alt="成长">
+                    <button id="btn-menu-growth" type="button" class="corner-menu-btn corner-top-right" aria-label="成长">
+                        <img src="assets/ui_refined/btn_growth.png" class="corner-btn-img" alt="">
                         <div id="dot-growth" class="red-dot"></div>
-                    </div>
+                    </button>
 
                     <!-- 右下：皮肤 -->
-                    <div id="btn-menu-skins" class="corner-menu-btn corner-bottom-right">
-                        <img src="assets/ui_generated/btn_skins.png" class="corner-btn-img" alt="皮肤">
+                    <button id="btn-menu-skins" type="button" class="corner-menu-btn corner-bottom-right" aria-label="皮肤">
+                        <img src="assets/ui_refined/btn_skins.png" class="corner-btn-img" alt="">
                         <div id="dot-skins" class="red-dot"></div>
-                    </div>
+                    </button>
 
                     <!-- 中央英雄展示区 -->
                     <div class="hero-display-area">
                         <div class="game-title-wrapper">
-                            <div class="game-title-text">吞噬成鲲</div>
-                            <div class="stamp-badge">修仙</div>
+                            <img src="assets/ui_refined/title_logo.png" class="game-title-logo" alt="吞噬成鲲">
                         </div>
 
                         <div class="hero-avatar-wrapper">
                             <img src="assets/creatures_motion/stage_4_frame_0.png" class="hero-fish-img" alt="锦鲤">
                         </div>
 
-                        <div id="hero-current-form" class="hero-info-tag">当前形态：锦鲤</div>
-                        <div id="highest-stage-name" class="hero-info-tag" style="color:#ffe169;margin-top:4px;">最高记录：鲨鱼阶段</div>
+                        <div id="hero-current-form" class="hero-info-tag">当前形态：<span>锦鲤</span></div>
+                        <div id="highest-stage-name" class="hero-info-tag" style="margin-top:4px;">最高记录：<span>鲨鱼阶段</span></div>
 
                         <!-- 奢华 3D 金色“开始吞噬”按钮 -->
                         <div class="main-start-btn-container">
-                            <img id="btn-start-game" src="assets/ui_generated/btn_start.png" class="main-start-btn-img" alt="开始吞噬">
+                            <button id="btn-start-game" class="main-start-btn" type="button" aria-label="开始吞噬">
+                                <img src="assets/ui_refined/btn_start.png" class="main-start-btn-img" alt="">
+                            </button>
                         </div>
 
-                        <div class="daily-task-pill" onclick="window.gameEngine.openModal('modal-tasks')">
+                        <button class="daily-task-pill" type="button" onclick="window.gameEngine.openModal('modal-tasks')">
                             <span>📋 今日任务 <span id="daily-task-count">2/4</span></span>
                             <span style="color:#ffe169;">❯</span>
-                        </div>
+                        </button>
                     </div>
                 </div>
             </div>
@@ -149,7 +158,7 @@
 
                     <div class="hud-top-right">
                         <div id="hud-timer" class="hud-timer">00:00</div>
-                        <div id="btn-pause" class="hud-pause-btn">⏸️</div>
+                        <button id="btn-pause" type="button" class="hud-pause-btn" aria-label="暂停游戏">⏸️</button>
                     </div>
                 </div>
 
@@ -166,11 +175,11 @@
 
                     <!-- 右下技能按钮 -->
                     <div class="skill-buttons-zone">
-                        <div id="btn-dash" class="skill-btn">
+                        <button id="btn-dash" type="button" class="skill-btn" aria-label="冲刺">
                             <span class="skill-icon">⚡</span>
                             <span class="skill-name">冲刺</span>
                             <div id="dash-cd-overlay" class="skill-cd-overlay"></div>
-                        </div>
+                        </button>
                     </div>
                 </div>
             </div>
@@ -259,7 +268,7 @@
                 <div class="modal-card">
                     <div class="modal-header">
                         <div class="modal-title">任务中心</div>
-                        <div class="modal-close-btn">✖</div>
+                        <button type="button" class="modal-close-btn" aria-label="关闭任务中心">✖</button>
                     </div>
                     <div class="modal-body">
                         <div id="tasks-list-container"></div>
@@ -269,12 +278,18 @@
 
             <!-- P08 生物图鉴弹窗 -->
             <div id="modal-biopedia" class="modal-overlay">
-                <div class="modal-card">
+                <div class="modal-card biopedia-modal-card">
                     <div class="modal-header">
-                        <div class="modal-title">生物图鉴</div>
-                        <div class="modal-close-btn">✖</div>
+                        <div>
+                            <div class="modal-title">生物图鉴</div>
+                            <div class="biopedia-subtitle">十重形态 · 逐阶解锁</div>
+                        </div>
+                        <div class="biopedia-header-actions">
+                            <div id="biopedia-progress" class="biopedia-progress">0 / 10 已解锁</div>
+                            <button type="button" class="modal-close-btn" aria-label="关闭生物图鉴">✖</button>
+                        </div>
                     </div>
-                    <div class="modal-body">
+                    <div class="modal-body biopedia-scroll-area">
                         <div id="biopedia-grid" class="biopedia-grid"></div>
                     </div>
                 </div>
@@ -282,19 +297,36 @@
 
             <!-- P08 生物详情弹窗 -->
             <div id="modal-bio-detail" class="modal-overlay">
-                <div class="modal-card" style="max-width:480px;">
+                <div class="modal-card bio-detail-card">
                     <div class="modal-header">
-                        <div id="bio-detail-title" class="modal-title">生物详情</div>
-                        <div class="modal-close-btn" onclick="document.getElementById('modal-bio-detail').classList.remove('active')">✖</div>
+                        <div id="bio-detail-title" class="modal-title">形态档案</div>
+                        <button type="button" class="modal-close-btn" aria-label="关闭生物详情" onclick="document.getElementById('modal-bio-detail').classList.remove('active')">✖</button>
                     </div>
-                    <div class="modal-body" style="text-align:center;">
-                        <img id="bio-detail-img" src="" style="width:100%;max-height:260px;object-fit:cover;border-radius:12px;margin-bottom:15px;box-shadow:0 6px 15px rgba(0,0,0,0.8);">
-                        <div id="bio-detail-name" style="font-size:22px;font-weight:900;color:var(--primary-gold);margin-bottom:8px;">4阶 锦鲤</div>
-                        <div id="bio-detail-habitat" style="font-size:13px;color:#38bdf8;margin-bottom:5px;">生活海域：淡水河流、湖泊</div>
-                        <div id="bio-detail-exp" style="font-size:13px;color:#10b981;margin-bottom:12px;">吞噬经验：120 EXP</div>
-                        <div id="bio-detail-story" style="font-size:13px;line-height:1.6;color:#cbd5e1;background:rgba(5,20,38,0.7);padding:12px;border-radius:10px;text-align:left;">
-                            锦鲤色彩斑斓，象征好运与吉祥。它们适应力强，在清澈的水域中悠然游动。
-                        </div>
+                    <div class="modal-body bio-detail-body">
+                        <figure class="bio-detail-visual">
+                            <img id="bio-detail-img" src="" alt="">
+                        </figure>
+                        <section class="bio-detail-copy">
+                            <div class="bio-detail-badges">
+                                <span id="bio-detail-stage" class="bio-detail-stage">4阶</span>
+                                <span id="bio-detail-type" class="bio-detail-type">稀有形态</span>
+                            </div>
+                            <h2 id="bio-detail-name">锦鲤</h2>
+                            <dl class="bio-detail-stats">
+                                <div>
+                                    <dt>生活海域</dt>
+                                    <dd id="bio-detail-habitat">福泽海域</dd>
+                                </div>
+                                <div>
+                                    <dt>吞噬经验</dt>
+                                    <dd id="bio-detail-exp">90 EXP</dd>
+                                </div>
+                            </dl>
+                            <div class="bio-detail-story-block">
+                                <div class="bio-detail-story-title">形态记载</div>
+                                <p id="bio-detail-story">红白鳞片与飘逸长鳍象征幸运，进化到这一阶段后体型与吞噬反馈都会明显增强。</p>
+                            </div>
+                        </section>
                     </div>
                 </div>
             </div>
@@ -304,7 +336,7 @@
                 <div class="modal-card">
                     <div class="modal-header">
                         <div class="modal-title">成长强化</div>
-                        <div class="modal-close-btn">✖</div>
+                        <button type="button" class="modal-close-btn" aria-label="关闭成长强化">✖</button>
                     </div>
                     <div class="modal-body">
                         <div id="upgrade-list-container" class="upgrade-list"></div>
@@ -317,7 +349,7 @@
                 <div class="modal-card">
                     <div class="modal-header">
                         <div class="modal-title">皮肤中心</div>
-                        <div class="modal-close-btn">✖</div>
+                        <button type="button" class="modal-close-btn" aria-label="关闭皮肤中心">✖</button>
                     </div>
                     <div class="modal-body">
                         <div id="skins-list-container" class="upgrade-list"></div>
@@ -330,7 +362,7 @@
                 <div class="modal-card" style="max-width:420px;">
                     <div class="modal-header">
                         <div class="modal-title">游戏设置</div>
-                        <div class="modal-close-btn">✖</div>
+                        <button type="button" class="modal-close-btn" aria-label="关闭游戏设置">✖</button>
                     </div>
                     <div class="modal-body" style="display:flex;flex-direction:column;gap:18px;">
                         <div style="display:flex;justify-content:space-between;align-items:center;">
@@ -360,18 +392,18 @@
     </div>
 
     <!-- 脚本引用库 -->
-    <script src="js/audio.js"></script>
-    <script src="js/data.js"></script>
-    <script src="js/storage.js"></script>
-    <script src="js/joystick.js"></script>
-    <script src="js/entities.js"></script>
-    <script src="js/map.js"></script>
-    <script src="js/game.js"></script>
+    <script src="js/audio.js?v=23"></script>
+    <script src="js/data.js?v=23"></script>
+    <script src="js/storage.js?v=23"></script>
+    <script src="js/joystick.js?v=23"></script>
+    <script src="js/entities.js?v=23"></script>
+    <script src="js/map.js?v=23"></script>
+    <script src="js/game.js?v=23"></script>
     <!-- PWA Service Worker 注册 (带强制版本刷新) -->
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js?v=9')
+                navigator.serviceWorker.register('./sw.js?v=23')
                     .then((reg) => {
                         console.log('[PWA] Service Worker 注册成功: ', reg.scope);
                         reg.update();

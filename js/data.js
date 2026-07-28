@@ -9,23 +9,23 @@ const EVOLUTION_STAGES = [
     { stage: 4, name: "锦鲤", reqExp: 600, radius: 36, speed: 2.9, color: "#ff7675", desc: "吉祥祥瑞之鱼，吞噬吸收更快" },
     { stage: 5, name: "鲶鱼", reqExp: 950, radius: 48, speed: 3.0, color: "#6c5ce7", desc: "大口鲶鱼，可轻松吞噬小型游鱼" },
     { stage: 6, name: "电鳗", reqExp: 1400, radius: 62, speed: 3.1, color: "#fdcb6e", desc: "带电灵鱼，威慑力大增" },
-    { stage: 7, name: "鲨鱼", reqExp: 2000, radius: 78, speed: 3.2, color: "#00bec4", desc: "海域霸主之一，凶猛无匹" },
-    { stage: 8, name: "蛟",   reqExp: 3000, radius: 96, speed: 3.4, color: "#a29bfe", desc: "化蛟在即，已具备灵智与威压" },
-    { stage: 9, name: "鲲",   reqExp: 5000, radius: 118, speed: 3.6, color: "#ffe169", desc: "北冥有鱼，其名为鲲，化而为鸟，其名为鹏" },
-    { stage: 10, name: "鹏",  reqExp: 8000, radius: 145, speed: 3.8, color: "#f43f5e", desc: "扶摇直上九万里，遮天蔽日终极霸主" }
+    { stage: 7, name: "海豚", reqExp: 2000, radius: 78, speed: 3.5, color: "#7dd3fc", desc: "灵动迅捷的海洋精灵，拥有出色的转向能力" },
+    { stage: 8, name: "鲨鱼", reqExp: 3000, radius: 96, speed: 3.25, color: "#00bec4", desc: "海域霸主之一，吞噬范围大且压迫感十足" },
+    { stage: 9, name: "蛟",   reqExp: 5000, radius: 118, speed: 3.5, color: "#a29bfe", desc: "东方神话中的水中龙，为成鲲做最后准备" },
+    { stage: 10, name: "鲲",  reqExp: 8000, radius: 145, speed: 3.7, color: "#ffe169", desc: "北冥有鱼，其名为鲲，吞吐天地万物" }
 ];
 
 const BIOPEDIA_DATABASE = [
-    { id: "tadpole", name: "蝌蚪", level: 1, type: "common", habitat: "浅水湾", exp: 10, story: "幼小的水生生物，四处寻找小微粒生存。" },
-    { id: "fry", name: "鱼苗", level: 2, type: "common", habitat: "浅水湾", exp: 25, story: "微小的小鱼苗，聚集在水草丛中。" },
-    { id: "black_carp", name: "青鱼", level: 3, type: "common", habitat: "暗流平原", exp: 50, story: "体型修长，力气不小。" },
-    { id: "koi", name: "锦鲤", level: 4, type: "common", habitat: "福泽海域", exp: 90, story: "蕴含祥瑞气息的吉祥之鱼。" },
-    { id: "catfish", name: "鲶鱼", level: 5, type: "common", habitat: "淤泥海沟", exp: 160, story: "触须敏感，口吞百物。" },
-    { id: "electric_eel", name: "电鳗", level: 6, type: "common", habitat: "风雷海域", exp: 250, story: "体内蕴含强劲电流。" },
-    { id: "shark", name: "鲨鱼", level: 7, type: "common", habitat: "深海大峡谷", exp: 400, story: "嗅觉极其灵敏，游速极快。" },
-    { id: "flood_dragon", name: "蛟龙", level: 8, type: "mythic", habitat: "归墟之地", exp: 700, story: "神话生物！即将渡劫成龙。" },
-    { id: "ancient_kun", name: "北冥巨鲲", level: 9, type: "mythic", habitat: "九天沧海", exp: 1200, story: "神话终极生物！吞吐天地万物。" },
-    { id: "golden_roc", name: "九天金鹏", level: 10, type: "mythic", habitat: "无尽虚空", exp: 2500, story: "化而为鸟，其名为鹏，扶摇直上九万里！" }
+    { id: "tadpole", name: "蝌蚪", level: 1, type: "common", habitat: "浅水湾", exp: 10, card: "card_stage_1_tadpole.png", story: "黑灰色圆润幼体，依靠半透明尾巴灵活摆动，是吞噬之旅最弱小也最敏捷的起点。" },
+    { id: "fry", name: "鱼苗", level: 2, type: "common", habitat: "浅水湾", exp: 25, card: "card_stage_2_fry.png", story: "粉白色半透明幼鱼，柔软鱼鳍随水流轻摆，开始显现完整的鱼类轮廓。" },
+    { id: "black_carp", name: "青鱼", level: 3, type: "common", habitat: "暗流平原", exp: 50, card: "card_stage_10_kun.png", story: "蓝灰色鳞片覆盖修长身躯，游动稳定、属性均衡，能够捕食普通小鱼和小虾。" },
+    { id: "koi", name: "锦鲤", level: 4, type: "rare", habitat: "福泽海域", exp: 90, card: "card_stage_5_puffer.png", story: "红白鳞片与飘逸长鳍象征幸运，进化到这一阶段后体型与吞噬反馈都会明显增强。" },
+    { id: "catfish", name: "鲶鱼", level: 5, type: "rare", habitat: "淤泥海沟", exp: 160, card: "card_stage_3_blackcarp.png", story: "深色厚重的中期捕食者，宽大的嘴部与敏锐触须带来更强的吞噬范围。" },
+    { id: "electric_eel", name: "电鳗", level: 6, type: "rare", habitat: "风雷海域", exp: 250, card: "card_stage_7_eel.png", story: "细长身躯布满蓝色电纹，游动时电光随波增强，是兼具灵活移动与爆发力的特殊形态。" },
+    { id: "dolphin", name: "海豚", level: 7, type: "epic", habitat: "澄澈外海", exp: 400, card: "card_stage_7_dolphin.png", story: "流线型身体兼具亲和与力量，速度和转向能力出众，适合追捕更高级的目标。" },
+    { id: "shark", name: "鲨鱼", level: 8, type: "epic", habitat: "深海大峡谷", exp: 700, card: "card_stage_8_shark.png", story: "尖牙与锋利背鳍带来强烈压迫感，拥有巨大的吞噬范围，正式进入海域霸主阶段。" },
+    { id: "flood_dragon", name: "蛟", level: 9, type: "mythic", habitat: "归墟之地", exp: 1200, card: "card_stage_9_dragon.png", story: "蓝青龙身、龙角与长鳍构成东方神话形态，庞大身躯在深海暗流中盘旋前行。" },
+    { id: "ancient_kun", name: "鲲", level: 10, type: "mythic", habitat: "九天沧海", exp: 2500, card: "card_stage_6_squid.png", story: "最终神话形态，巨型鳍翼承载银蓝星光，能够吞噬绝大多数普通与精英生物。" }
 ];
 
 const UPGRADE_ITEMS = [
@@ -40,7 +40,7 @@ const TASK_LIST = [
     { id: "task_1", type: "novice", title: "初出茅庐", desc: "吞噬 20 只小鱼生物", req: 20, rewardCoin: 500, rewardExp: 100 },
     { id: "task_2", type: "daily", title: "海域探险家", desc: "单局存活时间达到 3 分钟", req: 180, rewardCoin: 800, rewardExp: 150 },
     { id: "task_3", type: "daily", title: "大块朵颐", desc: "达成 10 连击吞噬", req: 10, rewardCoin: 600, rewardExp: 120 },
-    { id: "task_4", type: "growth", title: "进化之路", desc: "成功进化至鲨鱼形态", req: 7, rewardCoin: 1500, rewardExp: 300 },
+    { id: "task_4", type: "growth", title: "进化之路", desc: "成功进化至鲨鱼形态", req: 8, rewardCoin: 1500, rewardExp: 300 },
     { id: "task_5", type: "achievement", title: "霸主降临", desc: "击败或吞噬 3 只精英怪", req: 3, rewardCoin: 3000, rewardExp: 600 }
 ];
 

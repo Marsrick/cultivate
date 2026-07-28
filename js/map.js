@@ -64,9 +64,9 @@ class SeaMapManager {
             const imgW = this.bgImg.width;
             const imgH = this.bgImg.height;
 
-            // 视差无缝平铺：保持建筑与海域景观天然正立姿态，配合预处理缝隙算法
-            const offsetX = (-(camera.x * 0.5) % imgW + imgW) % imgW;
-            const offsetY = (-(camera.y * 0.5) % imgH + imgH) % imgH;
+            // 1:1 绝对视角沉浸滚屏：背景海洋壁画与浮游物、怪物以 1.0x 完全同频位移
+            const offsetX = (-(camera.x * 1.0) % imgW + imgW) % imgW;
+            const offsetY = (-(camera.y * 1.0) % imgH + imgH) % imgH;
 
             // 无缝平铺背景，添加 1.5px 极小重叠防止 Canvas 亚像素缝隙黑线
             for (let x = offsetX - imgW; x < w + imgW; x += imgW) {

@@ -472,6 +472,14 @@ body, html {
     backdrop-filter: blur(8px);
 }
 
+#hero-current-form span {
+    color: #ffe25c;
+}
+
+#highest-stage-name span {
+    color: #56e7ff;
+}
+
 /* 奢华 3D 金色“开始吞噬”按钮 */
 .main-start-btn-container {
     position: relative;
@@ -610,6 +618,9 @@ body, html {
     font-size: 15px;
     cursor: pointer;
     box-shadow: 0 4px 12px rgba(0,0,0,0.6);
+    padding: 0;
+    color: #fff;
+    appearance: none;
 }
 
 .hud-task-tracker {
@@ -687,6 +698,9 @@ body, html {
     cursor: pointer;
     overflow: hidden;
     transition: transform 0.15s, box-shadow 0.15s;
+    padding: 0;
+    color: #fff;
+    appearance: none;
 }
 
 .skill-btn:hover {
@@ -786,6 +800,8 @@ body, html {
     align-items: center;
     cursor: pointer;
     transition: transform 0.2s, background 0.2s;
+    padding: 0;
+    appearance: none;
 }
 
 .modal-close-btn:hover {
@@ -878,18 +894,316 @@ body, html {
 }
 
 .bio-card {
-    transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.25s;
+    position: relative;
+    display: block;
+    width: 100%;
+    aspect-ratio: 3 / 4;
+    padding: 0;
+    overflow: hidden;
+    appearance: none;
+    border: 1px solid rgba(255, 225, 105, .55);
+    border-radius: 14px;
+    background: rgba(3, 19, 38, .92);
+    box-shadow: 0 8px 18px rgba(0, 0, 0, .62), inset 0 0 0 1px rgba(117, 202, 255, .14);
+    transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
     cursor: pointer;
-    border-radius: 12px;
 }
 
-.bio-card:hover {
-    transform: scale(1.07);
-    box-shadow: 0 10px 30px rgba(0, 242, 254, 0.7) !important;
+.bio-card img {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: contain;
+    background: #06172c;
+    transition: transform .32s ease, filter .25s ease;
+}
+
+.bio-card:hover:not(:disabled),
+.bio-card:focus-visible {
+    z-index: 2;
+    transform: translateY(-5px) scale(1.018);
+    border-color: #fff0a1;
+    box-shadow: 0 14px 32px rgba(0, 194, 255, .4), 0 0 0 2px rgba(255, 225, 105, .46);
+    outline: none;
+}
+
+.bio-card:hover:not(:disabled) img {
+    transform: scale(1.018);
 }
 
 .bio-card.locked {
-    filter: grayscale(0.95) brightness(0.5);
+    cursor: not-allowed;
+}
+
+.bio-card.locked img {
+    filter: grayscale(1) brightness(.4) contrast(1.08);
+}
+
+.bio-lock-label {
+    position: absolute;
+    left: 50%;
+    bottom: 12px;
+    transform: translateX(-50%);
+    min-width: 70%;
+    padding: 7px 10px;
+    border: 1px solid rgba(230, 235, 243, .5);
+    border-radius: 999px;
+    color: #e5e7eb;
+    background: rgba(3, 9, 18, .82);
+    box-shadow: 0 3px 12px rgba(0, 0, 0, .55);
+    font-size: 12px;
+    font-weight: 800;
+    line-height: 1;
+    white-space: nowrap;
+}
+
+#modal-biopedia,
+#modal-bio-detail {
+    z-index: 420;
+}
+
+.biopedia-modal-card {
+    width: min(92vw, 940px);
+    max-width: 940px;
+    height: min(92vh, 1100px);
+    max-height: 92vh;
+    padding: 28px 34px 30px;
+    border-color: #ffe878;
+    border-radius: 30px;
+    background:
+        radial-gradient(circle at 50% 0%, rgba(31, 96, 130, .23), transparent 38%),
+        linear-gradient(155deg, rgba(10, 27, 48, .985), rgba(4, 42, 39, .985));
+    box-shadow: 0 30px 80px rgba(0, 0, 0, .78), 0 0 0 1px rgba(255, 238, 143, .18), inset 0 0 42px rgba(74, 211, 255, .08);
+}
+
+.biopedia-modal-card .modal-header {
+    flex: 0 0 auto;
+    padding-bottom: 18px;
+    margin-bottom: 20px;
+    border-bottom-color: rgba(255, 232, 120, .48);
+}
+
+.biopedia-modal-card .modal-title {
+    font-size: clamp(30px, 3vw, 42px);
+    letter-spacing: .14em;
+}
+
+.biopedia-subtitle {
+    margin-top: 5px;
+    color: #9fd9ec;
+    font-size: 12px;
+    letter-spacing: .24em;
+}
+
+.biopedia-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.biopedia-progress {
+    padding: 7px 14px;
+    border: 1px solid rgba(117, 211, 238, .42);
+    border-radius: 999px;
+    color: #dff8ff;
+    background: rgba(7, 49, 75, .72);
+    font-size: 13px;
+    font-weight: 800;
+    white-space: nowrap;
+}
+
+.biopedia-scroll-area {
+    min-height: 0;
+    padding: 2px 14px 22px 2px;
+    overscroll-behavior: contain;
+    scrollbar-gutter: stable;
+}
+
+.biopedia-scroll-area::-webkit-scrollbar {
+    width: 8px;
+}
+
+.biopedia-scroll-area::-webkit-scrollbar-track {
+    background: rgba(2, 15, 28, .72);
+    border-radius: 999px;
+}
+
+.biopedia-scroll-area::-webkit-scrollbar-thumb {
+    min-height: 60px;
+    border: 2px solid rgba(2, 15, 28, .72);
+    border-radius: 999px;
+    background: linear-gradient(180deg, #ffe475, #bd7a17);
+}
+
+.bio-detail-card {
+    width: min(90vw, 900px);
+    max-width: 900px;
+    max-height: 90vh;
+    padding: 26px 30px 30px;
+    border-color: #ffe878;
+    border-radius: 28px;
+    background:
+        radial-gradient(circle at 18% 18%, rgba(35, 146, 189, .2), transparent 34%),
+        linear-gradient(150deg, rgba(9, 28, 50, .99), rgba(4, 39, 38, .99));
+}
+
+.bio-detail-body {
+    display: grid;
+    grid-template-columns: minmax(240px, .82fr) minmax(300px, 1.18fr);
+    gap: 30px;
+    align-items: center;
+    padding: 2px 4px 4px;
+    overflow: auto;
+}
+
+.bio-detail-visual {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 0;
+    margin: 0;
+    padding: 12px;
+    border: 1px solid rgba(255, 225, 105, .38);
+    border-radius: 20px;
+    background: rgba(2, 14, 28, .58);
+    box-shadow: inset 0 0 30px rgba(53, 196, 242, .1), 0 12px 28px rgba(0, 0, 0, .42);
+}
+
+#bio-detail-img {
+    display: block;
+    width: 100%;
+    height: min(64vh, 560px);
+    min-height: 320px;
+    object-fit: contain;
+    border-radius: 14px;
+    filter: drop-shadow(0 10px 20px rgba(0, 0, 0, .38));
+}
+
+.bio-detail-copy {
+    min-width: 0;
+    text-align: left;
+}
+
+.bio-detail-badges {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+}
+
+.bio-detail-stage,
+.bio-detail-type {
+    padding: 6px 12px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 900;
+    letter-spacing: .08em;
+}
+
+.bio-detail-stage {
+    color: #122138;
+    background: linear-gradient(180deg, #fff6bb, #e8ad35);
+}
+
+.bio-detail-type {
+    color: #bdf4ff;
+    border: 1px solid rgba(89, 216, 255, .45);
+    background: rgba(8, 70, 102, .62);
+}
+
+#bio-detail-name {
+    margin: 0 0 20px;
+    color: #fff3bd;
+    font-family: var(--font-calligraphy);
+    font-size: clamp(34px, 4vw, 52px);
+    line-height: 1.08;
+    letter-spacing: .1em;
+    text-shadow: 0 3px 15px rgba(255, 201, 78, .28);
+}
+
+.bio-detail-stats {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    margin: 0 0 18px;
+}
+
+.bio-detail-stats > div {
+    padding: 13px 14px;
+    border: 1px solid rgba(119, 208, 234, .24);
+    border-radius: 14px;
+    background: rgba(4, 35, 57, .68);
+}
+
+.bio-detail-stats dt {
+    margin-bottom: 5px;
+    color: #86bed1;
+    font-size: 11px;
+    letter-spacing: .08em;
+}
+
+.bio-detail-stats dd {
+    margin: 0;
+    color: #f2fbff;
+    font-size: 15px;
+    font-weight: 800;
+}
+
+.bio-detail-story-block {
+    padding: 18px 20px;
+    border: 1px solid rgba(255, 225, 105, .26);
+    border-radius: 16px;
+    background: rgba(3, 20, 34, .7);
+}
+
+.bio-detail-story-title {
+    margin-bottom: 8px;
+    color: #ffe681;
+    font-size: 13px;
+    font-weight: 900;
+    letter-spacing: .16em;
+}
+
+#bio-detail-story {
+    margin: 0;
+    color: #cfe2ec;
+    font-size: 14px;
+    line-height: 1.85;
+}
+
+@media (max-width: 760px) {
+    .biopedia-modal-card {
+        width: min(94vw, 940px);
+        height: 94vh;
+        max-height: 94vh;
+        padding: 22px 20px 24px;
+        border-radius: 24px;
+    }
+    .biopedia-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 14px;
+    }
+    .biopedia-progress { display: none; }
+    .bio-detail-card {
+        width: 94vw;
+        max-height: 94vh;
+        padding: 22px 20px 24px;
+    }
+    .bio-detail-body {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+    #bio-detail-img {
+        height: min(52vh, 520px);
+        min-height: 280px;
+    }
+}
+
+@media (max-width: 430px) {
+    .biopedia-modal-card .modal-title { font-size: 26px; }
+    .biopedia-subtitle { letter-spacing: .12em; }
+    .biopedia-grid { gap: 10px; }
+    .bio-lock-label { font-size: 10px; }
 }
 
 .upgrade-level-dots {
@@ -907,4 +1221,448 @@ body, html {
 .level-dot.active {
     background: var(--primary-gold);
     box-shadow: 0 0 8px var(--primary-gold);
+}
+
+/* ============================================================
+   Reference-aligned landscape lobby
+   ============================================================ */
+#screen-main-menu {
+    padding: 0;
+    overflow: hidden;
+    isolation: isolate;
+    background-color: #063d72;
+    background-image: url('../assets/bg_underwater_ocean.png');
+    background-position: center 48%;
+    background-size: cover;
+    backdrop-filter: none;
+}
+
+#screen-main-menu::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: rgba(0, 137, 201, .08);
+    pointer-events: none;
+}
+
+.top-header {
+    top: 1.7vh;
+    padding: 0 2vw;
+    align-items: flex-start;
+}
+
+.user-profile {
+    width: min(30vw, 430px);
+    min-width: 300px;
+    gap: 1vw;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    backdrop-filter: none;
+}
+
+.user-avatar-frame {
+    flex: 0 0 14.5vh;
+    width: 14.5vh;
+    height: 14.5vh;
+    min-width: 96px;
+    min-height: 96px;
+    max-width: 142px;
+    max-height: 142px;
+    overflow: hidden;
+    border-width: 4px;
+    background: #45b8ec;
+    box-shadow: 0 0 0 3px #825719, 0 5px 18px rgba(0, 27, 68, 0.72), inset 0 0 18px rgba(255,255,255,.6);
+}
+
+.user-avatar-img {
+    width: 155%;
+    height: 126%;
+    object-fit: cover;
+    object-position: 43% 46%;
+}
+
+.user-level-badge {
+    bottom: -2px;
+    min-width: 38px;
+    padding: 2px 8px;
+    color: #fff8d4;
+    font-size: clamp(12px, 1.7vh, 18px);
+    background: #7c4b17;
+    border: 2px solid #f6d17b;
+}
+
+.user-info {
+    flex: 1;
+    padding-top: 2.2vh;
+    min-width: 0;
+}
+
+.user-name-line {
+    display: flex;
+    align-items: center;
+    gap: .8vw;
+}
+
+.user-name {
+    font-size: clamp(20px, 3.1vh, 31px);
+    line-height: 1;
+    letter-spacing: .04em;
+    white-space: nowrap;
+    text-shadow: 0 3px 5px rgba(0, 24, 60, .95), 0 0 10px rgba(93, 212, 255, .45);
+}
+
+.profile-mark {
+    color: #e4f6ff;
+    font-size: clamp(24px, 3.6vh, 36px);
+    text-shadow: 0 0 9px #00aefa;
+}
+
+.user-progress-row {
+    display: flex;
+    align-items: center;
+    gap: .7vw;
+    margin-top: 1.5vh;
+}
+
+.user-level-text {
+    color: #fff3bf;
+    font-size: clamp(18px, 2.7vh, 27px);
+    font-weight: 900;
+    white-space: nowrap;
+    text-shadow: 0 2px 4px #063265;
+}
+
+.user-progress-track {
+    display: block;
+    width: min(11vw, 178px);
+    height: 1.7vh;
+    min-height: 13px;
+    overflow: hidden;
+    border: 2px solid rgba(183, 230, 255, .42);
+    border-radius: 999px;
+    background: #063662;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,.58);
+}
+
+.user-progress-fill {
+    display: block;
+    width: 46%;
+    height: 100%;
+    border-radius: inherit;
+    background: #ffc928;
+    box-shadow: 0 0 10px #ffdc43;
+}
+
+.header-resources {
+    gap: 1.6vw;
+}
+
+.resource-pill-box {
+    min-width: 0;
+}
+
+.resource-pill {
+    min-width: min(14vw, 224px);
+    min-height: 6.2vh;
+    justify-content: space-between;
+    gap: .7vw;
+    padding: .45vh .5vw .45vh 1vw;
+    border: 3px solid #83caf0;
+    border-radius: 999px;
+    font-size: clamp(19px, 3vh, 31px);
+    text-shadow: 0 2px 4px #072b5a;
+    background: rgba(5, 69, 119, .86);
+    box-shadow: inset 0 0 0 2px rgba(255,255,255,.14), 0 5px 15px rgba(2,38,78,.58);
+}
+
+.resource-icon {
+    font-size: clamp(28px, 4.8vh, 48px);
+    line-height: 1;
+    filter: drop-shadow(0 2px 2px rgba(0,0,0,.55));
+}
+
+.resource-add-btn {
+    flex: 0 0 auto;
+    width: 4.8vh;
+    height: 4.8vh;
+    min-width: 36px;
+    min-height: 36px;
+    border: 3px solid #aedfff;
+    background: #1874ad;
+    font-size: clamp(22px, 3.8vh, 38px);
+    line-height: 1;
+    box-shadow: inset 0 0 7px rgba(255,255,255,.55), 0 2px 7px rgba(0,0,0,.45);
+}
+
+.resource-sub-timer {
+    margin-top: .2vh;
+    color: #fff;
+    font-size: clamp(14px, 2.2vh, 22px);
+}
+
+.settings-btn {
+    position: relative;
+    width: 8.5vh;
+    height: 8.5vh;
+    min-width: 68px;
+    min-height: 68px;
+    max-width: 88px;
+    max-height: 88px;
+    padding: 0;
+    border: 0;
+    color: #fff6d5;
+    background: transparent;
+    box-shadow: none;
+}
+
+.settings-button-img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    filter: drop-shadow(0 5px 12px rgba(0, 27, 68, .58));
+}
+
+.settings-label {
+    position: absolute;
+    top: calc(100% + .5vh);
+    left: 50%;
+    transform: translateX(-50%);
+    color: #fff;
+    font-size: clamp(15px, 2.4vh, 24px);
+    font-weight: 900;
+    white-space: nowrap;
+    text-shadow: 0 2px 4px #052d62;
+}
+
+.home-center-content {
+    width: 100%;
+    height: 100%;
+}
+
+.corner-menu-btn {
+    width: 34vh;
+    height: 34vh;
+    min-width: 148px;
+    min-height: 148px;
+    max-width: 340px;
+    max-height: 340px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    appearance: none;
+}
+
+.corner-btn-img {
+    filter: drop-shadow(0 7px 11px rgba(0, 22, 51, .65));
+}
+
+.corner-top-left { top: 17vh; left: -1.2vw; }
+.corner-bottom-left { top: 47.8vh; bottom: auto; left: -1.2vw; }
+.corner-top-right { top: 17vh; right: -1.2vw; }
+.corner-bottom-right { top: 47.8vh; right: -1.2vw; bottom: auto; }
+
+.red-dot {
+    top: 10%;
+    right: 18%;
+    width: 3.6vh;
+    height: 3.6vh;
+    min-width: 24px;
+    min-height: 24px;
+    border-width: 3px;
+}
+
+.hero-display-area {
+    position: absolute;
+    top: 10.6vh;
+    left: 50%;
+    width: min(61vw, 820px);
+    min-width: 590px;
+    height: 87vh;
+    justify-content: flex-start;
+    transform: translateX(-50%);
+    pointer-events: none;
+}
+
+.game-title-wrapper {
+    flex: 0 0 auto;
+    margin-bottom: 0;
+}
+
+.game-title-logo {
+    display: block;
+    width: min(39vw, 610px);
+    height: auto;
+    filter: drop-shadow(0 5px 7px rgba(2, 35, 76, .68));
+}
+
+.game-title-text {
+    font-size: clamp(72px, 11.8vh, 118px);
+    line-height: 1;
+    letter-spacing: .06em;
+    filter: drop-shadow(0 3px 0 #2d689a) drop-shadow(0 6px 0 #063562) drop-shadow(0 0 20px rgba(255, 236, 173, .75));
+}
+
+.stamp-badge {
+    top: 10%;
+    right: -3.2vh;
+    font-size: clamp(12px, 1.9vh, 19px);
+}
+
+.hero-avatar-wrapper {
+    width: min(52vw, 790px);
+    height: 38vh;
+    min-height: 230px;
+    max-height: 335px;
+    margin: -2.8vh 0 0;
+    background: transparent;
+}
+
+.hero-fish-img {
+    width: min(50vw, 760px);
+    max-height: 39vh;
+    filter: drop-shadow(0 18px 28px rgba(0, 26, 61, .72)) drop-shadow(0 0 26px rgba(255, 131, 72, .62));
+    animation: heroFloatRefined 3.5s ease-in-out infinite;
+}
+
+@keyframes heroFloatRefined {
+    0%, 100% { transform: translateY(-1vh) rotate(0deg) scale(1.4); }
+    50% { transform: translateY(-2.2vh) rotate(-2deg) scale(1.4); }
+}
+
+.hero-info-tag {
+    min-width: min(41vw, 590px);
+    padding: .25vh 1.5vw;
+    border: 0;
+    border-radius: 0;
+    color: #fff;
+    background: rgba(4, 72, 130, .58);
+    box-shadow: inset 0 1px 0 rgba(173, 229, 255, .42), inset 0 -1px 0 rgba(173, 229, 255, .42), 0 5px 10px rgba(0, 33, 75, .25);
+    font-size: clamp(22px, 3.35vh, 34px);
+    font-weight: 900;
+    text-align: center;
+    text-shadow: 0 2px 4px #062c61;
+    backdrop-filter: blur(4px);
+}
+
+.main-start-btn-container {
+    margin-top: 1.8vh;
+    pointer-events: auto;
+}
+
+.main-start-btn {
+    padding: 0;
+    border: 0;
+    background: transparent;
+    appearance: none;
+    cursor: pointer;
+}
+
+.main-start-btn-img {
+    width: min(38vw, 600px);
+    height: auto;
+    min-width: 430px;
+    filter: drop-shadow(0 8px 18px rgba(255, 165, 0, .65));
+}
+
+.daily-task-pill {
+    min-width: min(30vw, 455px);
+    min-height: 6.3vh;
+    justify-content: space-around;
+    margin-top: .8vh;
+    padding: .6vh 1.7vw;
+    border: 2px solid #56bde9;
+    border-radius: 999px;
+    color: #dceeff;
+    background: rgba(3, 65, 117, .82);
+    font-size: clamp(20px, 3.1vh, 31px);
+    pointer-events: auto;
+}
+
+.daily-task-pill #daily-task-count {
+    color: #66ff8a;
+    font-weight: 900;
+}
+
+.corner-menu-btn:focus-visible,
+.main-start-btn:focus-visible,
+.daily-task-pill:focus-visible,
+.settings-btn:focus-visible,
+.hud-pause-btn:focus-visible,
+.skill-btn:focus-visible,
+.modal-close-btn:focus-visible {
+    outline: 4px solid #fff0a8;
+    outline-offset: 4px;
+}
+
+@media (max-width: 1180px), (max-height: 720px) {
+    .top-header { padding-inline: 1.4vw; }
+    .user-profile { min-width: 245px; }
+    .user-avatar-frame { min-width: 76px; min-height: 76px; }
+    .header-resources { gap: .8vw; }
+    .resource-pill { min-width: 12.5vw; }
+    .resource-icon { font-size: 3.8vh; }
+    .resource-add-btn { min-width: 30px; min-height: 30px; }
+    .corner-menu-btn { min-width: 210px; min-height: 210px; }
+    .hero-display-area { min-width: 500px; }
+    .hero-avatar-wrapper { min-height: 180px; }
+    .main-start-btn-img { min-width: 360px; }
+}
+
+@media (orientation: landscape) and (max-height: 640px) {
+    .hero-display-area { top: 7.5vh; height: 92vh; }
+    .game-title-logo { width: min(34vw, 500px); }
+    .hero-avatar-wrapper {
+        height: 34vh;
+        min-height: 0;
+        margin-top: -2vh;
+    }
+    .hero-fish-img { max-height: 35vh; }
+    .hero-info-tag {
+        min-width: min(39vw, 520px);
+        font-size: clamp(17px, 2.8vh, 24px);
+        line-height: 1.22;
+    }
+    .main-start-btn-container { margin-top: .6vh; }
+    .main-start-btn-img {
+        width: min(34vw, 500px);
+        min-width: 320px;
+    }
+    .daily-task-pill {
+        min-height: 5.4vh;
+        margin-top: 0;
+        font-size: clamp(17px, 2.8vh, 24px);
+    }
+}
+
+@media (orientation: portrait) {
+    #screen-main-menu::after {
+        content: '请横屏体验吞噬成鲲';
+        position: absolute;
+        inset: 0;
+        z-index: 200;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 32px;
+        color: #fff4bf;
+        background: #063d72;
+        font-family: var(--font-calligraphy);
+        font-size: clamp(26px, 7vw, 40px);
+        text-align: center;
+        letter-spacing: .08em;
+        white-space: nowrap;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .hero-fish-img,
+    .red-dot,
+    .toast-message,
+    .modal-card {
+        animation: none !important;
+    }
 }
