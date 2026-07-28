@@ -87,31 +87,32 @@
                 <div class="home-center-content">
                     <!-- 左上：任务 -->
                     <div id="btn-menu-tasks" class="corner-menu-btn corner-top-left">
-                        <img src="assets/ui_sliced/btn_tasks.png" class="corner-btn-img" alt="任务">
+                        <img src="assets/ui_generated/btn_tasks.png" class="corner-btn-img" alt="任务">
                         <div id="dot-tasks" class="red-dot"></div>
                     </div>
 
                     <!-- 左下：图鉴 -->
                     <div id="btn-menu-biopedia" class="corner-menu-btn corner-bottom-left">
-                        <img src="assets/ui_sliced/btn_biopedia.png" class="corner-btn-img" alt="图鉴">
+                        <img src="assets/ui_generated/btn_biopedia.png" class="corner-btn-img" alt="图鉴">
                     </div>
 
                     <!-- 右上：成长 -->
                     <div id="btn-menu-growth" class="corner-menu-btn corner-top-right">
-                        <img src="assets/ui_sliced/btn_growth.png" class="corner-btn-img" alt="成长">
+                        <img src="assets/ui_generated/btn_growth.png" class="corner-btn-img" alt="成长">
                         <div id="dot-growth" class="red-dot"></div>
                     </div>
 
                     <!-- 右下：皮肤 -->
                     <div id="btn-menu-skins" class="corner-menu-btn corner-bottom-right">
-                        <img src="assets/ui_sliced/btn_skins.png" class="corner-btn-img" alt="皮肤">
+                        <img src="assets/ui_generated/btn_skins.png" class="corner-btn-img" alt="皮肤">
                         <div id="dot-skins" class="red-dot"></div>
                     </div>
 
                     <!-- 中央英雄展示区 -->
                     <div class="hero-display-area">
                         <div class="game-title-wrapper">
-                            <img src="assets/ui_sliced/title_logo.png" class="game-title-img-logo" alt="吞噬成鲲">
+                            <div class="game-title-text">吞噬成鲲</div>
+                            <div class="stamp-badge">修仙</div>
                         </div>
 
                         <div class="hero-avatar-wrapper">
@@ -123,7 +124,7 @@
 
                         <!-- 奢华 3D 金色“开始吞噬”按钮 -->
                         <div class="main-start-btn-container">
-                            <img id="btn-start-game" src="assets/ui_sliced/btn_start.png" class="main-start-btn-img" alt="开始吞噬">
+                            <img id="btn-start-game" src="assets/ui_generated/btn_start.png" class="main-start-btn-img" alt="开始吞噬">
                         </div>
 
                         <div class="daily-task-pill" onclick="window.gameEngine.openModal('modal-tasks')">
@@ -370,7 +371,7 @@
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js?v=5')
+                navigator.serviceWorker.register('./sw.js?v=6')
                     .then((reg) => {
                         console.log('[PWA] Service Worker 注册成功: ', reg.scope);
                         reg.update();
