@@ -1,12 +1,72 @@
-// 全量预加载 动作图 目录提取的 10 阶段共 80 帧官方动作精灵序列
-const STAGE_MOTION_FRAMES = [];
+// V25 使用 10 张高清透明母版做连续形变动画。
+// 不再叠加不同动作帧，避免半透明双影、亮度跳变与高分屏放大模糊。
+const STAGE_MASTER_SPRITES = [];
+const MASTER_SPRITE_LOADS = [];
 for (let s = 1; s <= 10; s++) {
-    STAGE_MOTION_FRAMES[s - 1] = [];
-    for (let f = 0; f < 8; f++) {
-        const img = new Image();
-        img.src = `assets/creatures_motion/stage_${s}_frame_${f}.png`;
-        STAGE_MOTION_FRAMES[s - 1][f] = img;
+    const img = new Image();
+    img.decoding = 'async';
+    const load = new Promise((resolve) => {
+        img.onload = () => resolve(true);
+        img.onerror = () => resolve(false);
+    });
+    img.src = `assets/creatures_motion_v25/masters/stage_${s}_master.png`;
+    STAGE_MASTER_SPRITES[s - 1] = img;
+    MASTER_SPRITE_LOADS.push(load);
+}
+window.MOTION_ASSETS_READY = Promise.all(MASTER_SPRITE_LOADS);
+
+function drawContinuousSprite(ctx, sprite, x, y, width, height, options = {}) {
+    if (!sprite || !sprite.complete || sprite.naturalWidth <= 0) return false;
+
+    const phase = options.phase || 0;
+    const amplitude = options.amplitude || 0;
+    const waveStart = Math.max(0.16, Math.min(0.72, options.waveStart || 0.5));
+    const sourceW = sprite.naturalWidth;
+    const sourceH = sprite.naturalHeight;
+    const bodySourceW = Math.max(1, Math.round(sourceW * waveStart));
+    const bodyDestW = width * waveStart;
+
+    // 头部与身体保持一个完整、全不透明的绘制层，保证眼睛和鳞片始终锐利。
+    ctx.drawImage(
+        sprite,
+        0,
+        0,
+        bodySourceW,
+        sourceH,
+        x,
+        y,
+        bodyDestW + 1,
+        height
+    );
+
+    // 只对后半身做连续尾摆；相邻切片轻微重叠，避免 Canvas 亚像素缝隙。
+    const tailSlices = width >= 380 ? 18 : width >= 180 ? 14 : 10;
+    const tailSourceW = sourceW - bodySourceW;
+    const tailDestW = width - bodyDestW;
+    for (let i = 0; i < tailSlices; i++) {
+        const t0 = i / tailSlices;
+        const t1 = (i + 1) / tailSlices;
+        const sourceX = bodySourceW + Math.floor(t0 * tailSourceW);
+        const nextSourceX = bodySourceW + Math.ceil(t1 * tailSourceW);
+        const sourceSliceW = Math.max(1, nextSourceX - sourceX);
+        const destX = x + bodyDestW + t0 * tailDestW;
+        const destSliceW = Math.max(1, (t1 - t0) * tailDestW + 1.1);
+        const weight = Math.pow((t0 + t1) * 0.5, 1.75);
+        const offsetY = Math.sin(phase + weight * 1.15) * amplitude * height * weight;
+
+        ctx.drawImage(
+            sprite,
+            sourceX,
+            0,
+            sourceSliceW,
+            sourceH,
+            destX,
+            y + offsetY,
+            destSliceW,
+            height
+        );
     }
+    return true;
 }
 
 class PlayerFish {
@@ -16,6 +76,8 @@ class PlayerFish {
         this.vx = 0;
         this.vy = 0;
         this.angle = 0;
+        this.lastMoveDirection = { x: 1, y: 0 };
+        this.dashDirection = { x: 1, y: 0 };
 
         this.stageIdx = 0; // 蝌蚪 (Stage 1, 0-indexed: 0)
         this.exp = 0;
@@ -34,26 +96,33 @@ class PlayerFish {
         this.spawnProtectionTimer = 12;
 
         this.animTime = 0;
+        this.motionBlend = 0;
     }
 
     getStageInfo() {
         return EVOLUTION_STAGES[this.stageIdx] || EVOLUTION_STAGES[0];
     }
 
-    update(dt, inputVector, upgradeMultipliers) {
+    update(dt, inputVector = { x: 0, y: 0 }, upgradeMultipliers = { speedBonus: 0 }) {
         this.animTime += dt;
 
         const info = this.getStageInfo();
-            // 数据中的速度沿用原 60fps 手感，但位移按 dt 结算，避免高刷新率设备移动过快。
-            let speed = info.speed * 60 * (1 + upgradeMultipliers.speedBonus);
+        // 数据中的速度沿用原 60fps 手感，但位移按 dt 结算，避免高刷新率设备移动过快。
+        const speed = info.speed * 60 * (1 + (upgradeMultipliers.speedBonus || 0));
+        const inputX = Number.isFinite(inputVector.x) ? inputVector.x : 0;
+        const inputY = Number.isFinite(inputVector.y) ? inputVector.y : 0;
+        const inputMagnitude = Math.hypot(inputX, inputY);
+        const isMovingInput = inputMagnitude > 0.01;
+        const inputDirection = isMovingInput
+            ? { x: inputX / inputMagnitude, y: inputY / inputMagnitude }
+            : this.lastMoveDirection;
 
-        if (this.dashCD > 0) this.dashCD -= dt;
+        if (isMovingInput) this.lastMoveDirection = { ...inputDirection };
+
+        if (this.dashCD > 0) this.dashCD = Math.max(0, this.dashCD - dt);
         if (this.isDashing) {
-            speed *= 2.0;
-            this.dashTimer -= dt;
-            if (this.dashTimer <= 0) {
-                this.isDashing = false;
-            }
+            this.dashTimer = Math.max(0, this.dashTimer - dt);
+            if (this.dashTimer <= 0) this.isDashing = false;
         }
 
         if (this.shieldTimer > 0) {
@@ -72,9 +141,14 @@ class PlayerFish {
             this.spawnProtectionTimer = Math.max(0, this.spawnProtectionTimer - dt);
         }
 
-        const isMovingInput = (inputVector.x !== 0 || inputVector.y !== 0);
-        if (isMovingInput) {
-            const targetAngle = Math.atan2(inputVector.y, inputVector.x);
+        const motionTarget = isMovingInput || this.isDashing ? 1 : 0;
+        this.motionBlend += (motionTarget - this.motionBlend) * (1 - Math.exp(-dt * 8));
+        if (this.isDashing) {
+            const dashSpeed = speed * 2.6;
+            this.vx = this.dashDirection.x * dashSpeed;
+            this.vy = this.dashDirection.y * dashSpeed;
+        } else if (isMovingInput) {
+            const targetAngle = Math.atan2(inputDirection.y, inputDirection.x);
             // 角度平滑插值旋转
             let diff = targetAngle - this.angle;
             while (diff < -Math.PI) diff += Math.PI * 2;
@@ -99,33 +173,62 @@ class PlayerFish {
         }
     }
 
-    dash() {
-        if (this.dashCD <= 0) {
-            this.isDashing = true;
-            this.dashTimer = 1.2;
-            this.dashCD = 4.0 * this.dashCooldownMultiplier;
-            if (window.soundEngine) window.soundEngine.playDash();
-            return true;
-        }
-        return false;
+    dash(inputVector = null) {
+        if (this.isDead || this.dashCD > 0) return false;
+
+        const inputX = Number.isFinite(inputVector?.x) ? inputVector.x : 0;
+        const inputY = Number.isFinite(inputVector?.y) ? inputVector.y : 0;
+        const inputMagnitude = Math.hypot(inputX, inputY);
+        const direction = inputMagnitude > 0.08
+            ? { x: inputX / inputMagnitude, y: inputY / inputMagnitude }
+            : this.lastMoveDirection;
+
+        this.dashDirection = { ...direction };
+        this.lastMoveDirection = { ...direction };
+        this.angle = Math.atan2(direction.y, direction.x);
+        this.isDashing = true;
+        this.dashTimer = 0.55;
+        this.dashCD = 4.0 * this.dashCooldownMultiplier;
+
+        const immediateDashSpeed = this.getStageInfo().speed * 60 * 2.6;
+        this.vx = direction.x * immediateDashSpeed;
+        this.vy = direction.y * immediateDashSpeed;
+
+        if (window.soundEngine) window.soundEngine.playDash();
+        return true;
     }
 
-    getFrameIndex(isMoving) {
-        if (this.isDead) return 7; // 帧8: 死亡帧
-        if (this.isHurt) return 6; // 帧7: 受击帧
-        if (this.isDashing) return 5; // 帧6: 冲刺帧
+    getMotionProfile(isMoving) {
+        const isLongBody = this.stageIdx === 5 || this.stageIdx === 8;
+        const waveStart = isLongBody ? 0.22 : 0.5;
 
-        if (isMoving) {
-            // 游动动画: 3 → 4 → 5 → 4 (索引 [2, 3, 4, 3])
-            const swimSeq = [2, 3, 4, 3];
-            const step = Math.floor(this.animTime * 8) % 4;
-            return swimSeq[step];
-        } else {
-            // 待机动画: 1 → 2 → 1 → 2 (索引 [0, 1, 0, 1])
-            const idleSeq = [0, 1, 0, 1];
-            const step = Math.floor(this.animTime * 3) % 4;
-            return idleSeq[step];
+        if (this.isDead) {
+            return { amplitude: 0, frequency: 0, rotation: 0.22, scaleX: 0.985, scaleY: 0.985, waveStart };
         }
+        if (this.isHurt) {
+            return { amplitude: 0.018, frequency: 13, rotation: -0.11, scaleX: 0.96, scaleY: 1.04, waveStart };
+        }
+        if (this.isDashing) {
+            return { amplitude: 0.012, frequency: 14, rotation: 0, scaleX: 1.055, scaleY: 0.955, waveStart };
+        }
+        if (isMoving) {
+            return {
+                amplitude: isLongBody ? 0.048 : 0.03,
+                frequency: isLongBody ? 8.4 : 7.4,
+                rotation: 0,
+                scaleX: 1,
+                scaleY: 1,
+                waveStart
+            };
+        }
+        return {
+            amplitude: isLongBody ? 0.02 : 0.01,
+            frequency: 2.5,
+            rotation: 0,
+            scaleX: 1,
+            scaleY: 1,
+            waveStart
+        };
     }
 
     draw(ctx, skinColor) {
@@ -173,20 +276,26 @@ class PlayerFish {
         ctx.fill();
 
         const isMoving = Math.hypot(this.vx, this.vy) > 0.3;
-        const fIdx = this.getFrameIndex(isMoving);
-        const frames = STAGE_MOTION_FRAMES[this.stageIdx];
-        const sprite = frames ? frames[fIdx] : null;
+        const motion = this.getMotionProfile(isMoving);
+        const sprite = STAGE_MASTER_SPRITES[this.stageIdx];
 
         if (sprite && sprite.complete && sprite.naturalWidth > 0) {
             // 视觉物理重心微调：补偿纹理留白，保证主角 100.0% 精确居中于 (0,0)
             const visualScale = Math.max(1.3, 3.6 - this.stageIdx * 0.23);
-            ctx.drawImage(
-                sprite,
-                -r * 1.5 * visualScale,
-                -r * 1.02 * visualScale,
-                r * 3 * visualScale,
-                r * 2.2 * visualScale
-            );
+            const drawX = -r * 1.5 * visualScale;
+            const drawY = -r * 1.02 * visualScale;
+            const drawW = r * 3 * visualScale;
+            const drawH = r * 2.2 * visualScale;
+            const idleLift = Math.sin(this.animTime * 2.6) * r * 0.02 * (1 - this.motionBlend);
+
+            ctx.translate(0, idleLift);
+            if (motion.rotation) ctx.rotate(motion.rotation);
+            ctx.scale(motion.scaleX, motion.scaleY);
+            drawContinuousSprite(ctx, sprite, drawX, drawY, drawW, drawH, {
+                phase: this.animTime * motion.frequency,
+                amplitude: motion.amplitude,
+                waveStart: motion.waveStart
+            });
         } else {
             ctx.fillStyle = color;
             ctx.beginPath();
@@ -291,16 +400,6 @@ class EnemyFish {
         this.y += this.vy * dt;
     }
 
-    getFrameIndex() {
-        if (this.isDead) return 7;
-        if (this.isHurt) return 6;
-
-        // 游动动画: 3 → 4 → 5 → 4 (对应索引 [2, 3, 4, 3])
-        const swimSeq = [2, 3, 4, 3];
-        const step = Math.floor(this.animTime * 7) % 4;
-        return swimSeq[step];
-    }
-
     draw(ctx, playerStageIdx) {
         const info = this.getStageInfo();
         let r = info.radius * (this.isElite ? 1.35 : 1.0);
@@ -317,18 +416,25 @@ class EnemyFish {
             ctx.transform(-cosA, -sinA, -sinA, cosA, 0, 0);
         }
 
-        const fIdx = this.getFrameIndex();
-        const frames = STAGE_MOTION_FRAMES[this.stageIdx];
-        const sprite = frames ? frames[fIdx] : null;
+        const sprite = STAGE_MASTER_SPRITES[this.stageIdx];
 
         if (sprite && sprite.complete && sprite.naturalWidth > 0) {
             const visualScale = Math.max(1.05, 2.3 - this.stageIdx * 0.13);
-            ctx.drawImage(
+            const isLongBody = this.stageIdx === 5 || this.stageIdx === 8;
+            const hurtRotation = this.isHurt ? -0.09 : 0;
+            if (hurtRotation) ctx.rotate(hurtRotation);
+            drawContinuousSprite(
+                ctx,
                 sprite,
                 -r * 1.4 * visualScale,
                 -r * 1.0 * visualScale,
                 r * 2.8 * visualScale,
-                r * 2.0 * visualScale
+                r * 2.0 * visualScale,
+                {
+                    phase: this.animTime * (isLongBody ? 7.8 : 6.8),
+                    amplitude: this.isHurt ? 0.018 : (isLongBody ? 0.046 : 0.028),
+                    waveStart: isLongBody ? 0.22 : 0.5
+                }
             );
         } else {
             ctx.fillStyle = info.color;

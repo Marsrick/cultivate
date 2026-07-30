@@ -56,8 +56,8 @@ class SeaMapManager {
     }
 
     drawBackground(ctx, camera) {
-        const w = ctx.canvas.width;
-        const h = ctx.canvas.height;
+        const w = ctx.canvas.logicalWidth || ctx.canvas.clientWidth || ctx.canvas.width;
+        const h = ctx.canvas.logicalHeight || ctx.canvas.clientHeight || ctx.canvas.height;
 
         ctx.save();
         if (this.bgLoaded && this.bgImg.width > 0) {
@@ -119,8 +119,8 @@ class SeaMapManager {
     }
 
     drawEdgeWarnings(ctx, camera, player, enemies) {
-        const w = ctx.canvas.width;
-        const h = ctx.canvas.height;
+        const w = ctx.canvas.logicalWidth || ctx.canvas.clientWidth || ctx.canvas.width;
+        const h = ctx.canvas.logicalHeight || ctx.canvas.clientHeight || ctx.canvas.height;
 
         enemies.forEach(e => {
             // 如果是危险高级怪或精英怪

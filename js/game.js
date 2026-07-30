@@ -24,6 +24,7 @@ class GameEngine {
 
         this.initCanvasSize();
         this.initJoystick();
+        this.initOrientationLock();
         this.bindEvents();
         this.loadProgress();
 
@@ -37,12 +38,31 @@ class GameEngine {
     }
 
     initCanvasSize() {
-        const updateSize = () => {
-            this.canvas.width = window.innerWidth;
-            this.canvas.height = window.innerHeight;
+        this.resizeCanvas = () => {
+            const width = Math.max(1, Math.round(window.innerWidth));
+            const height = Math.max(1, Math.round(window.innerHeight));
+            const pixelRatio = Math.min(2, Math.max(1, window.devicePixelRatio || 1));
+            const backingWidth = Math.round(width * pixelRatio);
+            const backingHeight = Math.round(height * pixelRatio);
+
+            this.viewportWidth = width;
+            this.viewportHeight = height;
+            this.pixelRatio = pixelRatio;
+            this.canvas.logicalWidth = width;
+            this.canvas.logicalHeight = height;
+            this.canvas.style.width = `${width}px`;
+            this.canvas.style.height = `${height}px`;
+
+            if (this.canvas.width !== backingWidth || this.canvas.height !== backingHeight) {
+                this.canvas.width = backingWidth;
+                this.canvas.height = backingHeight;
+            }
+            this.ctx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+            this.ctx.imageSmoothingEnabled = true;
+            this.ctx.imageSmoothingQuality = 'high';
         };
-        updateSize();
-        window.addEventListener('resize', updateSize);
+        this.resizeCanvas();
+        window.addEventListener('resize', this.resizeCanvas);
     }
 
     initJoystick() {
@@ -52,6 +72,78 @@ class GameEngine {
         this.joystick = new JoystickController(zone, base, thumb);
     }
 
+    initOrientationLock() {
+        this.orientationGate = document.getElementById('orientation-gate');
+        this.orientationStatus = document.getElementById('orientation-status');
+        this.orientationButton = document.getElementById('btn-enter-landscape');
+
+        this.updateOrientationGate = () => {
+            const isPortrait = window.matchMedia('(orientation: portrait)').matches;
+            if (this.orientationGate) {
+                this.orientationGate.classList.toggle('active', isPortrait);
+                this.orientationGate.setAttribute('aria-hidden', String(!isPortrait));
+            }
+            if (!isPortrait && this.orientationStatus) {
+                this.orientationStatus.textContent = '已切换横屏，正在进入修仙海域';
+            }
+            this.resizeCanvas();
+        };
+
+        if (this.orientationButton) {
+            this.orientationButton.addEventListener('click', async () => {
+                if (window.soundEngine) window.soundEngine.playClick();
+                await this.enterLandscapeMode(true);
+            });
+        }
+
+        window.addEventListener('resize', this.updateOrientationGate);
+        if (screen.orientation && typeof screen.orientation.addEventListener === 'function') {
+            screen.orientation.addEventListener('change', this.updateOrientationGate);
+        }
+        document.addEventListener('fullscreenchange', this.updateOrientationGate);
+        this.updateOrientationGate();
+
+        const isStandalone = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+        if (isStandalone) {
+            Promise.resolve().then(() => this.enterLandscapeMode(false));
+        }
+    }
+
+    async enterLandscapeMode(fromUserGesture = false) {
+        const isPortrait = window.matchMedia('(orientation: portrait)').matches;
+        if (!isPortrait) {
+            this.updateOrientationGate();
+            return true;
+        }
+
+        if (this.orientationStatus) {
+            this.orientationStatus.textContent = '正在请求全屏与横屏权限…';
+        }
+
+        if (fromUserGesture && !document.fullscreenElement && document.documentElement.requestFullscreen) {
+            try {
+                await document.documentElement.requestFullscreen({ navigationUI: 'hide' });
+            } catch (_) {
+                // 某些移动浏览器不允许网页全屏，继续尝试独立的方向锁。
+            }
+        }
+
+        if (screen.orientation && typeof screen.orientation.lock === 'function') {
+            try {
+                await screen.orientation.lock('landscape');
+            } catch (_) {
+                // 方向锁是受限能力，失败时保留可操作的旋转提示。
+            }
+        }
+
+        this.updateOrientationGate();
+        const switched = !window.matchMedia('(orientation: portrait)').matches;
+        if (!switched && this.orientationStatus) {
+            this.orientationStatus.textContent = '系统未允许自动旋转，请关闭手机方向锁后横放设备，再点一次重试';
+        }
+        return switched;
+    }
+
     loadProgress() {
         this.updateHeaderUI();
         this.simulateLoading();
@@ -59,13 +151,30 @@ class GameEngine {
 
     simulateLoading() {
         let progress = 0;
+        let interfaceReady = false;
+        let assetsReady = false;
+        let finished = false;
         const fill = document.getElementById('loading-bar-fill');
+        const finish = () => {
+            if (finished || !interfaceReady || !assetsReady) return;
+            finished = true;
+            setTimeout(() => this.switchState("MENU"), 180);
+        };
+
+        Promise.resolve(window.MOTION_ASSETS_READY)
+            .catch(() => [])
+            .then(() => {
+                assetsReady = true;
+                finish();
+            });
+
         const interval = setInterval(() => {
             progress += Math.floor(Math.random() * 20) + 15;
             if (progress >= 100) {
                 progress = 100;
                 clearInterval(interval);
-                setTimeout(() => this.switchState("MENU"), 300);
+                interfaceReady = true;
+                finish();
             }
             if (fill) fill.style.width = `${progress}%`;
         }, 120);
@@ -76,7 +185,11 @@ class GameEngine {
 
         // 隐藏所有页面和弹窗
         document.querySelectorAll('.ui-screen').forEach(s => s.classList.remove('active'));
-        document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('active'));
+        document.querySelectorAll('.modal-overlay').forEach(m => {
+            m.classList.remove('active');
+            m.setAttribute('aria-hidden', 'true');
+        });
+        document.body.classList.remove('modal-open');
 
         if (newState === "LOADING") {
             document.getElementById('screen-loading').classList.add('active');
@@ -109,8 +222,7 @@ class GameEngine {
     }
 
     startNewGame() {
-        this.canvas.width = window.innerWidth;
-        this.canvas.height = window.innerHeight;
+        this.resizeCanvas();
         this.player = new PlayerFish(0, 0);
         this.camera = { x: 0, y: 0 };
         this.enemies = [];
@@ -160,8 +272,10 @@ class GameEngine {
 
     bindEvents() {
         // 主界面开始按钮
-        document.getElementById('btn-start-game').addEventListener('click', () => {
+        document.getElementById('btn-start-game').addEventListener('click', async () => {
             if (window.soundEngine) window.soundEngine.playClick();
+            const landscapeReady = await this.enterLandscapeMode(true);
+            if (!landscapeReady) return;
             this.startNewGame();
         });
 
@@ -173,11 +287,7 @@ class GameEngine {
         document.getElementById('btn-settings').addEventListener('click', () => this.openModal('modal-settings'));
 
         // HUD 操作
-        document.getElementById('btn-dash').addEventListener('click', () => {
-            if (this.player && this.player.dash()) {
-                this.updateDashCDUI();
-            }
-        });
+        document.getElementById('btn-dash').addEventListener('click', () => this.tryDash());
         document.getElementById('btn-pause').addEventListener('click', () => {
             this.switchState("PAUSED");
             this.openModal('modal-pause');
@@ -187,22 +297,66 @@ class GameEngine {
         document.querySelectorAll('.modal-close-btn, .btn-close-modal').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const modal = e.target.closest('.modal-overlay');
-                if (modal) modal.classList.remove('active');
-                if (this.state === "PAUSED" || this.state === "EVOLVING") this.switchState("PLAYING");
+                this.closeModal(modal);
             });
         });
+
+        document.querySelectorAll('.modal-overlay').forEach(modal => {
+            modal.setAttribute('aria-hidden', 'true');
+            modal.addEventListener('pointerdown', (event) => {
+                if (event.target !== modal) return;
+                if (modal.id === 'modal-revive' || modal.id === 'modal-settlement') return;
+                this.closeModal(modal);
+            });
+        });
+
+        document.addEventListener('keydown', (event) => {
+            const isDashKey = event.code === 'Space'
+                || event.code === 'ShiftLeft'
+                || event.code === 'ShiftRight';
+            if (isDashKey && this.state === "PLAYING") {
+                event.preventDefault();
+                if (!event.repeat) this.tryDash();
+                return;
+            }
+            if (event.key !== 'Escape') return;
+            const activeModals = [...document.querySelectorAll('.modal-overlay.active')];
+            const modal = activeModals[activeModals.length - 1];
+            if (!modal || modal.id === 'modal-revive' || modal.id === 'modal-settlement') return;
+            this.closeModal(modal);
+        });
+    }
+
+    closeModal(modal) {
+        if (!modal) return;
+        modal.classList.remove('active');
+        modal.setAttribute('aria-hidden', 'true');
+        if (!document.querySelector('.modal-overlay.active')) {
+            document.body.classList.remove('modal-open');
+        }
+        if (this.state === "PAUSED" || this.state === "EVOLVING") this.switchState("PLAYING");
+        if (modal._returnFocus && document.contains(modal._returnFocus)) {
+            modal._returnFocus.focus({ preventScroll: true });
+        }
     }
 
     openModal(modalId) {
         if (window.soundEngine) window.soundEngine.playClick();
         const modal = document.getElementById(modalId);
         if (modal) {
+            modal._returnFocus = document.activeElement;
             modal.classList.add('active');
+            modal.setAttribute('aria-hidden', 'false');
+            document.body.classList.add('modal-open');
             if (modalId === 'modal-tasks') this.renderTasksUI();
             if (modalId === 'modal-biopedia') this.renderBiopediaUI();
             if (modalId === 'modal-growth') this.renderGrowthUI();
             if (modalId === 'modal-skins') this.renderSkinsUI();
             if (modalId === 'modal-settings') this.renderSettingsUI();
+            requestAnimationFrame(() => {
+                const focusTarget = modal.querySelector('.modal-close-btn, .game-btn:not([disabled]), button:not([disabled])');
+                if (focusTarget) focusTarget.focus({ preventScroll: true });
+            });
         }
     }
 
@@ -216,20 +370,24 @@ class GameEngine {
         setTimeout(() => toast.remove(), 1800);
     }
 
+    tryDash() {
+        if (this.state !== "PLAYING" || !this.player) return false;
+        const activated = this.player.dash(this.joystick.getVector());
+        this.updateDashCDUI();
+        return activated;
+    }
+
     updateDashCDUI() {
+        const dashButton = document.getElementById('btn-dash');
         const cdOverlay = document.getElementById('dash-cd-overlay');
-        if (!cdOverlay) return;
-        cdOverlay.style.display = 'flex';
-        let remaining = this.player.dashCD;
-        const interval = setInterval(() => {
-            remaining -= 0.1;
-            if (remaining <= 0) {
-                clearInterval(interval);
-                cdOverlay.style.display = 'none';
-            } else {
-                cdOverlay.innerText = remaining.toFixed(1);
-            }
-        }, 100);
+        if (!dashButton || !cdOverlay) return;
+
+        const remaining = Math.max(0, this.player?.dashCD || 0);
+        const isCoolingDown = remaining > 0;
+        dashButton.disabled = isCoolingDown;
+        dashButton.classList.toggle('cooldown', isCoolingDown);
+        cdOverlay.style.display = isCoolingDown ? 'flex' : 'none';
+        cdOverlay.innerText = isCoolingDown ? remaining.toFixed(1) : '';
     }
 
     loop(timestamp) {
@@ -249,6 +407,7 @@ class GameEngine {
         this.survivalTime += dt;
         const inputVec = this.joystick.getVector();
         this.player.update(dt, inputVec, this.upgradeMultipliers);
+        this.updateDashCDUI();
         this.mapManager.update(dt);
         this.particles.update(dt);
 
@@ -401,12 +560,17 @@ class GameEngine {
     }
 
     renderCanvas() {
+        const pixelRatio = this.pixelRatio || 1;
+        this.ctx.setTransform(1, 0, 0, 1, 0, 0);
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        this.ctx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+        this.ctx.imageSmoothingEnabled = true;
+        this.ctx.imageSmoothingQuality = 'high';
 
         // 1:1 绝对死锁相机视角：主角坐标等于相机坐标，保证 100.0% 垂直水平居中
         const camera = this.player ? { x: this.player.x, y: this.player.y } : { x: 0, y: 0 };
-        const centerX = Math.floor(this.canvas.width / 2);
-        const centerY = Math.floor(this.canvas.height / 2);
+        const centerX = Math.floor((this.viewportWidth || window.innerWidth) / 2);
+        const centerY = Math.floor((this.viewportHeight || window.innerHeight) / 2);
 
         // 绘制海域背景
         this.mapManager.drawBackground(this.ctx, camera);

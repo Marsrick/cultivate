@@ -1,7 +1,11 @@
-const CACHE_NAME = 'xiuxian-v23';
+const CACHE_NAME = 'xiuxian-v30';
 const MOTION_ASSETS = Array.from({ length: 10 }, (_, stageIdx) => (
     Array.from({ length: 8 }, (_, frameIdx) => `./assets/creatures_motion/stage_${stageIdx + 1}_frame_${frameIdx}.png`)
 )).flat();
+const MASTER_ASSETS = Array.from(
+    { length: 10 },
+    (_, stageIdx) => `./assets/creatures_motion_v25/masters/stage_${stageIdx + 1}_master.png`
+);
 const STATIC_ASSETS = [
     './',
     './index.html',
@@ -25,6 +29,8 @@ const STATIC_ASSETS = [
     './assets/ui_refined/btn_start.png',
     './assets/ui_refined/title_logo.png',
     './assets/ui_refined/btn_settings.png',
+    './assets/ui_refined/hero_koi_v2.png',
+    './assets/ui_refined/icon_dash_v2.png',
     './assets/creatures/card_stage_1_tadpole.png',
     './assets/creatures/card_stage_2_fry.png',
     './assets/creatures/card_stage_10_kun.png',
@@ -39,7 +45,8 @@ const STATIC_ASSETS = [
     './assets/icons/icon-512.png',
     './assets/icons/apple-touch-icon.png',
     './favicon.ico',
-    ...MOTION_ASSETS
+    ...MOTION_ASSETS,
+    ...MASTER_ASSETS
 ];
 
 // 安装 Service Worker
@@ -47,7 +54,7 @@ self.addEventListener('install', (event) => {
     self.skipWaiting();
     event.waitUntil(
         caches.open(CACHE_NAME).then((cache) => {
-            console.log('[SW] Pre-caching v23 assets');
+            console.log('[SW] Pre-caching v30 assets');
             return cache.addAll(STATIC_ASSETS);
         })
     );

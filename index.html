@@ -13,12 +13,20 @@
     <meta name="apple-mobile-web-app-title" content="吞噬成鲲">
     <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
     <link rel="icon" type="image/x-icon" href="favicon.ico">
-    <link rel="stylesheet" href="css/style.css?v=23">
+    <link rel="stylesheet" href="css/style.css?v=30">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&display=swap" rel="stylesheet">
 </head>
 <body>
+    <div id="orientation-gate" class="orientation-gate" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="orientation-title">
+        <div class="orientation-gate-card">
+            <div class="orientation-gate-mark" aria-hidden="true">↻</div>
+            <h2 id="orientation-title">横屏进入修仙海域</h2>
+            <p id="orientation-status">点击按钮后将自动进入全屏并切换横屏</p>
+            <button id="btn-enter-landscape" class="game-btn btn-primary" type="button">自动切换横屏</button>
+        </div>
+    </div>
     <div id="game-container">
         <!-- 游戏 Canvas 渲染层 -->
         <canvas id="game-canvas"></canvas>
@@ -123,7 +131,7 @@
                         </div>
 
                         <div class="hero-avatar-wrapper">
-                            <img src="assets/creatures_motion/stage_4_frame_0.png" class="hero-fish-img" alt="锦鲤">
+                            <img src="assets/ui_refined/hero_koi_v2.png" class="hero-fish-img" alt="锦鲤">
                         </div>
 
                         <div id="hero-current-form" class="hero-info-tag">当前形态：<span>锦鲤</span></div>
@@ -176,7 +184,7 @@
                     <!-- 右下技能按钮 -->
                     <div class="skill-buttons-zone">
                         <button id="btn-dash" type="button" class="skill-btn" aria-label="冲刺">
-                            <span class="skill-icon">⚡</span>
+                            <img class="skill-icon-img" src="assets/ui_refined/icon_dash_v2.png" alt="">
                             <span class="skill-name">冲刺</span>
                             <div id="dash-cd-overlay" class="skill-cd-overlay"></div>
                         </button>
@@ -300,7 +308,7 @@
                 <div class="modal-card bio-detail-card">
                     <div class="modal-header">
                         <div id="bio-detail-title" class="modal-title">形态档案</div>
-                        <button type="button" class="modal-close-btn" aria-label="关闭生物详情" onclick="document.getElementById('modal-bio-detail').classList.remove('active')">✖</button>
+                        <button type="button" class="modal-close-btn" aria-label="关闭生物详情">✖</button>
                     </div>
                     <div class="modal-body bio-detail-body">
                         <figure class="bio-detail-visual">
@@ -392,18 +400,18 @@
     </div>
 
     <!-- 脚本引用库 -->
-    <script src="js/audio.js?v=23"></script>
-    <script src="js/data.js?v=23"></script>
-    <script src="js/storage.js?v=23"></script>
-    <script src="js/joystick.js?v=23"></script>
-    <script src="js/entities.js?v=23"></script>
-    <script src="js/map.js?v=23"></script>
-    <script src="js/game.js?v=23"></script>
+    <script src="js/audio.js?v=30"></script>
+    <script src="js/data.js?v=30"></script>
+    <script src="js/storage.js?v=30"></script>
+    <script src="js/joystick.js?v=30"></script>
+    <script src="js/entities.js?v=30"></script>
+    <script src="js/map.js?v=30"></script>
+    <script src="js/game.js?v=30"></script>
     <!-- PWA Service Worker 注册 (带强制版本刷新) -->
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js?v=23')
+                navigator.serviceWorker.register('./sw.js?v=30')
                     .then((reg) => {
                         console.log('[PWA] Service Worker 注册成功: ', reg.scope);
                         reg.update();
